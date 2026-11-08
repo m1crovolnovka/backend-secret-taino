@@ -1,0 +1,18 @@
+taino:
+  telegram:
+    bot-token: "123456:TEST-TOKEN"
+    init-data-max-age-seconds: 3600
+    webhook-secret: test-secret
+  jwt:
+    secret: test-secret-key-at-least-32-characters!!
+    ttl-seconds: 3600
+  cors:
+    allowed-origins: http://localhost:5173
+  imgbb:
+    api-key: test-imgbb-key
+    base-url: http://localhost:9
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate

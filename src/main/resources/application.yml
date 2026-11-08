@@ -1,0 +1,70 @@
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-binding-errors: never
+
+spring:
+  application:
+    name: taino
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    path: /api/docs
+  swagger-ui:
+    path: /api/swagger
+
+taino:
+  telegram:
+    bot-token: ${TELEGRAM_BOT_TOKEN}
+    bot-username: ${TELEGRAM_BOT_USERNAME:}
+    init-data-max-age-seconds: ${TELEGRAM_INIT_DATA_MAX_AGE_SECONDS:3600}
+    webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
+  jwt:
+    secret: ${JWT_SECRET}
+    ttl-seconds: ${JWT_TTL_SECONDS:3600}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  mini-app-url: ${MINI_APP_URL:http://localhost:5173}
+  imgbb:
+    api-key: ${IMGBB_API_KEY:}
+    base-url: ${IMGBB_BASE_URL:https://api.imgbb.com}
+  scheduler:
+    draw-delay-ms: ${SCHEDULER_DRAW_DELAY_MS:30000}
+    delivery-delay-ms: ${SCHEDULER_DELIVERY_DELAY_MS:60000}
+    notify-delay-ms: ${SCHEDULER_NOTIFY_DELAY_MS:20000}
+
+logging:
+  level:
+    root: INFO
+    com.taino: INFO
+    org.springframework.security: WARN
