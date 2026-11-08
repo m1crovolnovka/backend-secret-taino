@@ -9,6 +9,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -27,11 +29,15 @@ public class ImageEntity {
     @Column(name = "storage_key", nullable = false, unique = true, length = 128)
     private String storageKey;
 
-    @Column(name = "public_url", nullable = false, length = 1000)
+    @Column(name = "public_url", length = 1000)
     private String publicUrl;
 
-    @Column(name = "display_url", nullable = false, length = 1000)
+    @Column(name = "display_url", length = 1000)
     private String displayUrl;
+
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(name = "content")
+    private byte[] content;
 
     @Column(name = "delete_url", length = 1000)
     private String deleteUrl;
@@ -113,6 +119,14 @@ public class ImageEntity {
 
     public void setThumbUrl(String thumbUrl) {
         this.thumbUrl = thumbUrl;
+    }
+
+    public byte[] getContent() {
+        return content;
+    }
+
+    public void setContent(byte[] content) {
+        this.content = content;
     }
 
     public String getMimeType() {

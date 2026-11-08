@@ -18,20 +18,17 @@ public class ImageUploadService {
     public static final int MAX_IMAGES_PER_USER = 40;
 
     private final ImageProcessor processor;
-    private final ImageStorage storage;
     private final ImageRepository imageRepository;
     private final UserRepository userRepository;
     private final RoomAccessService access;
 
     public ImageUploadService(
             ImageProcessor processor,
-            ImageStorage storage,
             ImageRepository imageRepository,
             UserRepository userRepository,
             RoomAccessService access
     ) {
         this.processor = processor;
-        this.storage = storage;
         this.imageRepository = imageRepository;
         this.userRepository = userRepository;
         this.access = access;
@@ -54,22 +51,35 @@ public class ImageUploadService {
         }
 
         ImageProcessor.ProcessedImage processed = processor.process(raw, file.getContentType());
-        StoredImage stored = storage.upload(processed.content(), processed.mimeType(), UUID.randomUUID().toString());
+        UUID id = UUID.randomUUID();
+        String path = "/api/images/" + id;
 
         ImageEntity entity = new ImageEntity();
+        entity.setId(id);
         entity.setOwner(owner);
-        entity.setStorageKey(stored.storageKey());
-        entity.setPublicUrl(stored.publicUrl());
-        entity.setDisplayUrl(stored.displayUrl());
-        entity.setDeleteUrl(stored.deleteUrl());
-        entity.setThumbUrl(stored.thumbUrl());
+        entity.setStorageKey(id.toString());
+        entity.setPublicUrl(path);
+        entity.setDisplayUrl(path);
+        entity.setThumbUrl(path);
+        entity.setDeleteUrl(null);
         entity.setMimeType(processed.mimeType());
-        entity.setWidth(processed.width() > 0 ? processed.width() : stored.width());
-        entity.setHeight(processed.height() > 0 ? processed.height() : stored.height());
+        entity.setWidth(processed.width() > 0 ? processed.width() : null);
+        entity.setHeight(processed.height() > 0 ? processed.height() : null);
         entity.setByteSize(processed.content().length);
+        entity.setContent(processed.content());
         entity = imageRepository.save(entity);
 
         return new ImageResponse(entity.getId(), entity.getDisplayUrl(), entity.getThumbUrl(), entity.getWidth(), entity.getHeight());
+    }
+
+    @Transactional(readOnly = true)
+    public ImageEntity requireWithContent(UUID id) {
+        ImageEntity entity = imageRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "IMAGE_NOT_FOUND", "Фото не найдено"));
+        if (entity.getContent() == null || entity.getContent().length == 0) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "IMAGE_EMPTY", "Фото недоступно");
+        }
+        return entity;
     }
 
     public record ImageResponse(UUID id, String url, String thumbUrl, Integer width, Integer height) {

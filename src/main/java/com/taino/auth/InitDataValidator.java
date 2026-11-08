@@ -69,9 +69,10 @@ public class InitDataValidator {
         byte[] calculated = hmac(secretKey, dataCheckString.getBytes(StandardCharsets.UTF_8));
         String calculatedHex = toHex(calculated);
 
-        if (!MessageDigest.isEqual(
-                calculatedHex.getBytes(StandardCharsets.UTF_8),
-                hash.toLowerCase().getBytes(StandardCharsets.UTF_8))) {
+        byte[] expected = calculatedHex.getBytes(StandardCharsets.UTF_8);
+        byte[] provided = hash.toLowerCase().getBytes(StandardCharsets.UTF_8);
+        // isEqual throws if lengths differ — treat that as invalid signature, not 500
+        if (expected.length != provided.length || !MessageDigest.isEqual(expected, provided)) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INIT_DATA_INVALID", "Подпись initData неверна");
         }
 

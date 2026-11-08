@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
                         .requestMatchers("/api/docs/**", "/api/swagger/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bot/webhook").permitAll()
                         .anyRequest().authenticated()
@@ -56,7 +57,14 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(properties.getCors().getAllowedOrigins());
+        List<String> origins = properties.getCors().getAllowedOrigins();
+        // "*" or patterns like https://*.vercel.app → use origin patterns (Mini App hosts vary)
+        boolean usePatterns = origins.stream().anyMatch(o -> "*".equals(o) || o.contains("*"));
+        if (usePatterns) {
+            config.setAllowedOriginPatterns(origins);
+        } else {
+            config.setAllowedOrigins(origins);
+        }
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
         config.setAllowCredentials(false);

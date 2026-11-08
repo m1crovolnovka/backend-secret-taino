@@ -2,7 +2,6 @@ package com.taino.security;
 
 import com.taino.auth.AuthenticatedUser;
 import com.taino.auth.JwtService;
-import com.taino.common.ApiException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,12 +38,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     AuthenticatedUser user = jwtService.parse(token);
                     var auth = new UsernamePasswordAuthenticationToken(user, null, List.of());
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                } catch (ApiException ex) {
+                } catch (Exception ex) {
+                    // Stale/invalid JWT must not block /api/auth/telegram re-login on mobile WebViews
                     SecurityContextHolder.clearContext();
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"code\":\"TOKEN_INVALID\",\"message\":\"Сессия недействительна\"}");
-                    return;
                 }
             }
         }
