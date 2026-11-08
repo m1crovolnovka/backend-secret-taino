@@ -77,13 +77,52 @@ public class WishlistService {
 
     @Transactional(readOnly = true)
     public WishlistDtos.WishlistResponse adminGet(Long userId, Long roomId, Long memberId) {
+        return build(requireAdminMember(userId, roomId, memberId), true);
+    }
+
+    @Transactional
+    public WishlistDtos.WishlistItemResponse adminAdd(Long userId, Long roomId, Long memberId, WishlistDtos.UpsertItemRequest req) {
+        RoomMemberEntity member = requireAdminMember(userId, roomId, memberId);
+        if (itemRepository.countByMemberId(member.getId()) >= MAX_ITEMS) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "WISHLIST_FULL", "Максимум " + MAX_ITEMS + " пунктов");
+        }
+        WishlistItemEntity item = new WishlistItemEntity();
+        item.setMember(member);
+        apply(item, req, userId);
+        item.setSortOrder(req.sortOrder() != null ? req.sortOrder() : (int) itemRepository.countByMemberId(member.getId()));
+        return toDto(itemRepository.save(item));
+    }
+
+    @Transactional
+    public WishlistDtos.WishlistItemResponse adminUpdate(
+            Long userId, Long roomId, Long memberId, Long itemId, WishlistDtos.UpsertItemRequest req
+    ) {
+        RoomMemberEntity member = requireAdminMember(userId, roomId, memberId);
+        WishlistItemEntity item = itemRepository.findByIdAndMemberId(itemId, member.getId())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "ITEM_NOT_FOUND", "Пункт не найден"));
+        apply(item, req, userId);
+        if (req.sortOrder() != null) {
+            item.setSortOrder(req.sortOrder());
+        }
+        return toDto(item);
+    }
+
+    @Transactional
+    public void adminDelete(Long userId, Long roomId, Long memberId, Long itemId) {
+        RoomMemberEntity member = requireAdminMember(userId, roomId, memberId);
+        WishlistItemEntity item = itemRepository.findByIdAndMemberId(itemId, member.getId())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "ITEM_NOT_FOUND", "Пункт не найден"));
+        itemRepository.delete(item);
+    }
+
+    private RoomMemberEntity requireAdminMember(Long userId, Long roomId, Long memberId) {
         access.requireAdminTab(roomId, userId);
         RoomMemberEntity member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "Участник не найден"));
         if (!member.getRoom().getId().equals(roomId) || member.getStatus() != MemberStatus.ACTIVE) {
             throw new ApiException(HttpStatus.NOT_FOUND, "MEMBER_NOT_FOUND", "Участник не найден");
         }
-        return build(member, true);
+        return member;
     }
 
     private RoomMemberEntity requireEditableParticipant(Long userId, Long roomId) {

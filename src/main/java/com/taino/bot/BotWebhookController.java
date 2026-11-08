@@ -54,19 +54,36 @@ public class BotWebhookController {
 
         if (text.startsWith("/start")) {
             String payload = text.length() > 6 ? text.substring(6).trim() : "";
-            String roomHint = "";
+            String roomCode = "";
             if (payload.startsWith("room_")) {
-                roomHint = payload.substring("room_".length()).trim();
+                roomCode = payload.substring("room_".length()).trim();
             }
+
             String miniApp = properties.getMiniAppUrl();
-            String body = "Привет! Это Тайно — анонимный Тайный Санта.\n"
-                    + "Открой Mini App кнопкой ниже.";
-            if (StringUtils.hasText(roomHint)) {
-                body += "\nКод комнаты: <b>" + roomHint + "</b>";
+            String webAppUrl = miniApp;
+            if (StringUtils.hasText(roomCode)) {
+                String sep = miniApp.contains("?") ? "&" : "?";
+                webAppUrl = miniApp + sep + "startapp=room_" + roomCode;
             }
-            // WebApp keyboard via sendMessage reply_markup is richer; text + URL is enough for MVP.
-            botClient.sendMessage(chatId, body + "\n\nMini App: " + miniApp
-                    + (StringUtils.hasText(roomHint) ? ("?startapp=room_" + roomHint) : ""));
+
+            String body = """
+                    <b>Тайно</b> — анонимный Тайный Санта в Telegram.
+
+                    Как это работает:
+                    1) Заходишь в комнату по ссылке или коду
+                    2) Составляешь список желаний (ссылки и фото)
+                    3) В срок раздачи тебе открывается <i>чужой</i> список — без имени
+                    4) Покупаешь подарок тихо и даришь до даты вручения
+
+                    Админ комнаты приглашает друзей, следит за сроками и запускает раздачу.
+                    """;
+            if (StringUtils.hasText(roomCode)) {
+                body += "\nТебя зовут в комнату с кодом <b>" + roomCode + "</b>. Нажми кнопку ниже — откроется Mini App сразу в этой комнате.";
+            } else {
+                body += "\nНажми кнопку ниже, чтобы открыть приложение.";
+            }
+
+            botClient.sendWelcome(chatId, body.trim(), webAppUrl, StringUtils.hasText(roomCode) ? "Войти в комнату" : "Открыть Тайно");
         }
         return ResponseEntity.ok().build();
     }

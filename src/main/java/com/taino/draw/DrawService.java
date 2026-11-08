@@ -118,7 +118,8 @@ public class DrawService {
 
     @Transactional
     public boolean adminDraw(Long userId, Long roomId, boolean redraw) {
-        access.requireAdminTab(roomId, userId);
+        // Owner can always force a draw, including ADMIN_AS_USER mode.
+        access.requireOwner(roomId, userId);
         RoomEntity room = roomRepository.findByIdForUpdate(roomId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "Комната не найдена"));
         if (!redraw && room.isDrawLocked()) {

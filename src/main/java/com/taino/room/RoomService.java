@@ -2,6 +2,7 @@ package com.taino.room;
 
 import com.taino.common.ApiException;
 import com.taino.common.TextSanitizer;
+import com.taino.config.TainoProperties;
 import com.taino.form.FormEntity;
 import com.taino.form.FormRepository;
 import com.taino.notification.NotificationService;
@@ -34,6 +35,7 @@ public class RoomService {
     private final RoomCodeGenerator codeGenerator;
     private final RoomAccessService access;
     private final NotificationService notificationService;
+    private final TainoProperties properties;
 
     public RoomService(
             RoomRepository roomRepository,
@@ -42,7 +44,8 @@ public class RoomService {
             UserRepository userRepository,
             RoomCodeGenerator codeGenerator,
             RoomAccessService access,
-            NotificationService notificationService
+            NotificationService notificationService,
+            TainoProperties properties
     ) {
         this.roomRepository = roomRepository;
         this.memberRepository = memberRepository;
@@ -51,6 +54,7 @@ public class RoomService {
         this.codeGenerator = codeGenerator;
         this.access = access;
         this.notificationService = notificationService;
+        this.properties = properties;
     }
 
     @Transactional(readOnly = true)
@@ -306,7 +310,23 @@ public class RoomService {
                 member.isParticipates(),
                 owner && room.getAdminMode().hasAdminTab(),
                 owner,
-                count
+                count,
+                inviteLink(room.getCode())
         );
+    }
+
+    private String inviteLink(String code) {
+        String username = properties.getTelegram().getBotUsername();
+        if (username != null && !username.isBlank()) {
+            String bot = username.startsWith("@") ? username.substring(1) : username;
+            return "https://t.me/" + bot + "?start=room_" + code;
+        }
+        // Fallback: open Mini App directly with start param (still joins the room on boot).
+        String mini = properties.getMiniAppUrl();
+        if (mini == null || mini.isBlank()) {
+            return "";
+        }
+        String sep = mini.contains("?") ? "&" : "?";
+        return mini + sep + "startapp=room_" + code;
     }
 }
