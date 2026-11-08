@@ -18,14 +18,11 @@ mvn spring-boot:run
 - OpenAPI UI: http://localhost:8080/api/swagger  
 - Health: http://localhost:8080/actuator/health  
 
-Полный стек (JAR собирается на хосте — так быстрее и стабильнее, чем Maven внутри Docker):
+Полный стек (JAR собирается внутри Docker, кэш Maven ускоряет повторные сборки):
 
 ```bash
-mvn -DskipTests package
 docker compose up --build
 ```
-
-Опциональный multi-stage Dockerfile (Maven внутри образа): `docker build -f Dockerfile.multistage -t taino-backend .`
 
 ## Аутентификация
 

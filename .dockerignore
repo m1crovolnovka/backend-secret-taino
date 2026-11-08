@@ -1,2 +1,13 @@
-*
-!target/taino-backend.jar
+target/
+.git/
+.idea/
+.vscode/
+*.iml
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+README.md
+Dockerfile.multistage
+**/.DS_Store
