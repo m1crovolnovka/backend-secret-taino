@@ -98,3 +98,4 @@ Integration (Testcontainers): требует Docker Desktop.
 ## Env
 
 См. `.env.example`. Файл `.env` не коммитить.
+let's go
