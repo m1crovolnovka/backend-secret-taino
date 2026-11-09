@@ -83,14 +83,23 @@ public class TelegramBotClient {
     public void ensureBotProfile() {
         String token = tokenOrNull();
         if (token == null) return;
+        // Shown on the bot profile under «What can this bot do?» (max 512 chars).
+        String description = """
+                Тайно — анонимный обмен подарками в Telegram 🎁
+
+                Правила:
+                1) Пишешь желания — название, ссылка, фото. Имени и своего цвета нет.
+                2) Ждёшь общий срок — чужие списки закрыты.
+                3) Тебе выпадает один чужой список без имени.
+                4) Даришь тихо до даты вручения.
+
+                Напишите /start, чтобы открыть приложение и войти в комнату
+                """.trim();
         try {
             restClient.post()
                     .uri("/bot{token}/setMyDescription", token)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of(
-                            "description",
-                            "Тайно — анонимный Тайный Санта в Telegram. Составь вишлист, получи чужой список без имени и подари тихо 🎁"
-                    ))
+                    .body(Map.of("description", description))
                     .retrieve()
                     .toBodilessEntity();
             restClient.post()
@@ -98,7 +107,7 @@ public class TelegramBotClient {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(Map.of(
                             "short_description",
-                            "Анонимный Тайный Санта: вишлисты без имён прямо в Telegram"
+                            "Анонимный обмен подарками: вишлисты без имён 🎁"
                     ))
                     .retrieve()
                     .toBodilessEntity();

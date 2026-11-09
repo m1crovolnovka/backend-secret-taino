@@ -15,7 +15,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Тайно API")
-                        .description("Анонимный Тайный Санта для Telegram Mini App")
+                        .description("Анонимный обмен подарками для Telegram Mini App")
                         .version("0.1.0"))
                 .components(new Components().addSecuritySchemes(
                         "bearerAuth",

@@ -31,7 +31,7 @@ public class InitDataValidator {
         this.objectMapper = objectMapper;
     }
 
-    public TelegramUserPayload validate(String initData, String botToken, long maxAgeSeconds) {
+    public InitDataResult validate(String initData, String botToken, long maxAgeSeconds) {
         if (initData == null || initData.isBlank()) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INIT_DATA_REQUIRED", "Нет данных авторизации Telegram");
         }
@@ -76,6 +76,11 @@ public class InitDataValidator {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INIT_DATA_INVALID", "Подпись initData неверна");
         }
 
+        String startParam = fields.get("start_param");
+        if (startParam != null && startParam.isBlank()) {
+            startParam = null;
+        }
+
         String userJson = fields.get("user");
         if (userJson == null || userJson.isBlank()) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INIT_DATA_INVALID", "user отсутствует в initData");
@@ -91,13 +96,14 @@ public class InitDataValidator {
             if (firstName == null || firstName.isBlank()) {
                 firstName = "User";
             }
-            return new TelegramUserPayload(
+            TelegramUserPayload user = new TelegramUserPayload(
                     id,
                     textOrNull(node, "username"),
                     firstName,
                     textOrNull(node, "last_name"),
                     textOrNull(node, "language_code")
             );
+            return new InitDataResult(user, startParam);
         } catch (ApiException ex) {
             throw ex;
         } catch (Exception ex) {

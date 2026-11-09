@@ -1,6 +1,6 @@
 # Taino Backend
 
-Production API для «Тайно» — анонимный Тайный Санта в Telegram Mini App.
+Production API для «Тайно» — анонимный обмен подарками в Telegram Mini App.
 
 **Стек:** Java 21, Spring Boot 3.4, Maven, Spring Security, JPA, Flyway, PostgreSQL, ImgBB, Spring Scheduling, Springdoc OpenAPI, Bucket4j, Testcontainers.
 

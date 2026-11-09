@@ -36,12 +36,28 @@ class InitDataValidatorTest {
                 "user", "{\"id\":42,\"first_name\":\"Denis\",\"username\":\"denis\",\"language_code\":\"ru\"}"
         ));
 
-        TelegramUserPayload user = validator.validate(initData, BOT_TOKEN, 3600);
+        InitDataResult result = validator.validate(initData, BOT_TOKEN, 3600);
+        TelegramUserPayload user = result.user();
 
         assertEquals(42L, user.id());
         assertEquals("Denis", user.firstName());
         assertEquals("denis", user.username());
         assertEquals("ru", user.languageCode());
+        assertEquals(null, result.startParam());
+    }
+
+    @Test
+    void readsStartParamFromInitData() {
+        long authDate = Instant.now().getEpochSecond();
+        String initData = signedInitData(Map.of(
+                "auth_date", String.valueOf(authDate),
+                "start_param", "room_ABC123",
+                "user", "{\"id\":42,\"first_name\":\"Denis\"}"
+        ));
+
+        InitDataResult result = validator.validate(initData, BOT_TOKEN, 3600);
+        assertEquals("room_ABC123", result.startParam());
+        assertEquals(42L, result.user().id());
     }
 
     @Test
@@ -91,7 +107,7 @@ class InitDataValidatorTest {
                 "user", "{\"id\":7,\"first_name\":\"Anon\"}"
         ));
 
-        TelegramUserPayload user = validator.validate(initData, BOT_TOKEN, 3600);
+        TelegramUserPayload user = validator.validate(initData, BOT_TOKEN, 3600).user();
         assertEquals(7L, user.id());
         assertEquals(null, user.username());
         assertEquals("Anon", user.firstName());

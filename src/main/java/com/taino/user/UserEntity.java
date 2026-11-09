@@ -34,6 +34,10 @@ public class UserEntity {
     @Column(name = "language_code", length = 16)
     private String languageCode;
 
+    /** When the bot first wrote to this user (creates chat history after startapp). */
+    @Column(name = "bot_greeted_at")
+    private Instant botGreetedAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -94,6 +98,14 @@ public class UserEntity {
 
     public void setLanguageCode(String languageCode) {
         this.languageCode = languageCode;
+    }
+
+    public Instant getBotGreetedAt() {
+        return botGreetedAt;
+    }
+
+    public void setBotGreetedAt(Instant botGreetedAt) {
+        this.botGreetedAt = botGreetedAt;
     }
 
     public Instant getCreatedAt() {
