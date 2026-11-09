@@ -7,11 +7,13 @@ import com.taino.room.RoomPhase;
 import com.taino.room.RoomRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Component
@@ -22,15 +24,18 @@ public class TainoScheduler {
     private final RoomRepository roomRepository;
     private final DrawService drawService;
     private final NotificationService notificationService;
+    private final int archiveAfterDeliveryDays;
 
     public TainoScheduler(
             RoomRepository roomRepository,
             DrawService drawService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            @Value("${taino.scheduler.archive-after-delivery-days:7}") int archiveAfterDeliveryDays
     ) {
         this.roomRepository = roomRepository;
         this.drawService = drawService;
         this.notificationService = notificationService;
+        this.archiveAfterDeliveryDays = Math.max(0, archiveAfterDeliveryDays);
     }
 
     @Scheduled(fixedDelayString = "${taino.scheduler.draw-delay-ms:30000}")
@@ -49,11 +54,24 @@ public class TainoScheduler {
         }
     }
 
+    /** When gift deadline arrives → DELIVERY (room still open for viewing assignment). */
     @Scheduled(fixedDelayString = "${taino.scheduler.delivery-delay-ms:60000}")
     @Transactional
     public void advanceDelivery() {
         for (RoomEntity room : roomRepository.findDueForDelivery(Instant.now())) {
             room.setPhase(RoomPhase.DELIVERY);
+            log.info("Room {} entered delivery phase", room.getId());
+        }
+    }
+
+    /** Days after deliveryAt → FINISHED archive. */
+    @Scheduled(fixedDelayString = "${taino.scheduler.archive-delay-ms:120000}")
+    @Transactional
+    public void archiveFinishedRooms() {
+        Instant cutoff = Instant.now().minus(archiveAfterDeliveryDays, ChronoUnit.DAYS);
+        for (RoomEntity room : roomRepository.findDueForArchive(cutoff)) {
+            room.setPhase(RoomPhase.FINISHED);
+            log.info("Room {} archived (FINISHED)", room.getId());
         }
     }
 

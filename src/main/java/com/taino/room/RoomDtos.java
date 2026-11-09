@@ -27,7 +27,8 @@ public final class RoomDtos {
             boolean hasAdminTab,
             boolean canTune,
             long memberCount,
-            String inviteLink
+            String inviteLink,
+            boolean archived
     ) {
     }
 

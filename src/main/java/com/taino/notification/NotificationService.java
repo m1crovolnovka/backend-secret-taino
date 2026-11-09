@@ -148,6 +148,7 @@ public class NotificationService {
             case "CHANGE_APPROVED" -> "Админ одобрил запрос на изменение. Окно редактирования открыто.";
             case "CHANGE_REJECTED" -> "Админ отклонил запрос на изменение.";
             case "REMINDER_DELIVERY" -> "Скоро вручение подарков в «" + title + "».";
+            case "ROOM_DELETED" -> "Комната «" + title + "» удалена.";
             default -> "Обновление по комнате «" + title + "».";
         };
     }

@@ -66,6 +66,9 @@ taino:
   scheduler:
     draw-delay-ms: ${SCHEDULER_DRAW_DELAY_MS:30000}
     delivery-delay-ms: ${SCHEDULER_DELIVERY_DELAY_MS:60000}
+    archive-delay-ms: ${SCHEDULER_ARCHIVE_DELAY_MS:120000}
+    # After delivery date, keep room in DELIVERY this many days, then move to archive (FINISHED)
+    archive-after-delivery-days: ${SCHEDULER_ARCHIVE_AFTER_DELIVERY_DAYS:7}
     notify-delay-ms: ${SCHEDULER_NOTIFY_DELAY_MS:20000}
 
 logging:

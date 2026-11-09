@@ -32,4 +32,12 @@ public interface RoomRepository extends JpaRepository<RoomEntity, Long> {
               and r.deliveryAt <= :now
             """)
     List<RoomEntity> findDueForDelivery(@Param("now") Instant now);
+
+    /** Rooms past delivery that should move into the archive (FINISHED). */
+    @Query("""
+            select r from RoomEntity r
+            where r.phase = com.taino.room.RoomPhase.DELIVERY
+              and r.deliveryAt <= :cutoff
+            """)
+    List<RoomEntity> findDueForArchive(@Param("cutoff") Instant cutoff);
 }

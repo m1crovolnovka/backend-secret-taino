@@ -2,12 +2,15 @@ package com.taino.room;
 
 import com.taino.security.SecurityUtils;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -26,6 +29,11 @@ public class RoomController {
     @GetMapping
     public List<RoomDtos.RoomSummary> myRooms() {
         return roomService.listMyRooms(SecurityUtils.currentUser().userId());
+    }
+
+    @GetMapping("/archived")
+    public List<RoomDtos.RoomSummary> archivedRooms() {
+        return roomService.listArchivedRooms(SecurityUtils.currentUser().userId());
     }
 
     @PostMapping
@@ -52,5 +60,11 @@ public class RoomController {
     public Map<String, Object> leave(@PathVariable Long roomId) {
         roomService.leave(SecurityUtils.currentUser().userId(), roomId);
         return Map.of("ok", true);
+    }
+
+    @DeleteMapping("/{roomId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long roomId) {
+        roomService.deleteRoom(SecurityUtils.currentUser().userId(), roomId);
     }
 }

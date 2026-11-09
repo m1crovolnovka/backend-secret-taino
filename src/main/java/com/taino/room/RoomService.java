@@ -60,8 +60,27 @@ public class RoomService {
     @Transactional(readOnly = true)
     public List<RoomDtos.RoomSummary> listMyRooms(Long userId) {
         return memberRepository.findByUserIdAndStatus(userId, MemberStatus.ACTIVE).stream()
+                .filter(m -> m.getRoom().getPhase() != RoomPhase.FINISHED)
                 .map(m -> toSummary(m.getRoom(), m))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RoomDtos.RoomSummary> listArchivedRooms(Long userId) {
+        return memberRepository.findByUserIdAndStatus(userId, MemberStatus.ACTIVE).stream()
+                .filter(m -> m.getRoom().getPhase() == RoomPhase.FINISHED)
+                .map(m -> toSummary(m.getRoom(), m))
+                .toList();
+    }
+
+    @Transactional
+    public void deleteRoom(Long userId, Long roomId) {
+        RoomMemberEntity owner = access.requireOwner(roomId, userId);
+        RoomEntity room = owner.getRoom();
+        String title = room.getTitle();
+        Long id = room.getId();
+        notificationService.enqueue(userId, id, "ROOM_DELETED", Instant.now(), Map.of("title", title));
+        roomRepository.delete(room);
     }
 
     @Transactional
@@ -334,7 +353,8 @@ public class RoomService {
                 owner && room.getAdminMode().hasAdminTab(),
                 owner,
                 count,
-                inviteLink(room.getCode())
+                room.getPhase() == RoomPhase.FINISHED ? "" : inviteLink(room.getCode()),
+                room.getPhase() == RoomPhase.FINISHED
         );
     }
 
