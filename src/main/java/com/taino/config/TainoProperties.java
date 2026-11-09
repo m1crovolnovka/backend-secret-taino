@@ -40,6 +40,8 @@ public class TainoProperties {
     public static class Telegram {
         private String botToken = "";
         private String botUsername = "";
+        /** BotFather Direct Link short name, e.g. taino → t.me/bot/taino?startapp=… */
+        private String miniAppShortName = "";
         private long initDataMaxAgeSeconds = 3600;
         private String webhookSecret = "";
 
@@ -57,6 +59,14 @@ public class TainoProperties {
 
         public void setBotUsername(String botUsername) {
             this.botUsername = botUsername;
+        }
+
+        public String getMiniAppShortName() {
+            return miniAppShortName;
+        }
+
+        public void setMiniAppShortName(String miniAppShortName) {
+            this.miniAppShortName = miniAppShortName;
         }
 
         public long getInitDataMaxAgeSeconds() {

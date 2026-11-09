@@ -48,6 +48,8 @@ taino:
   telegram:
     bot-token: ${TELEGRAM_BOT_TOKEN}
     bot-username: ${TELEGRAM_BOT_USERNAME:}
+    # Direct Link short name from BotFather (Bot → Mini App). Empty = Main Mini App link t.me/bot?startapp=
+    mini-app-short-name: ${TELEGRAM_MINI_APP_SHORT_NAME:}
     init-data-max-age-seconds: ${TELEGRAM_INIT_DATA_MAX_AGE_SECONDS:3600}
     webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
   jwt:

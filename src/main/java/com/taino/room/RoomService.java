@@ -338,18 +338,28 @@ public class RoomService {
         );
     }
 
+    /**
+     * Opens Mini App directly (not /start chat) and passes room via startapp.
+     * Prefer Direct Link: t.me/bot/shortName?startapp=room_CODE
+     * Else Main Mini App: t.me/bot?startapp=room_CODE
+     */
     private String inviteLink(String code) {
+        String payload = "room_" + code;
         String username = properties.getTelegram().getBotUsername();
         if (username != null && !username.isBlank()) {
             String bot = username.startsWith("@") ? username.substring(1) : username;
-            return "https://t.me/" + bot + "?start=room_" + code;
+            String shortName = properties.getTelegram().getMiniAppShortName();
+            if (shortName != null && !shortName.isBlank()) {
+                String name = shortName.startsWith("/") ? shortName.substring(1) : shortName;
+                return "https://t.me/" + bot + "/" + name + "?startapp=" + payload;
+            }
+            return "https://t.me/" + bot + "?startapp=" + payload;
         }
-        // Fallback: open Mini App directly with start param (still joins the room on boot).
         String mini = properties.getMiniAppUrl();
         if (mini == null || mini.isBlank()) {
             return "";
         }
         String sep = mini.contains("?") ? "&" : "?";
-        return mini + sep + "startapp=room_" + code;
+        return mini + sep + "tgWebAppStartParam=" + payload;
     }
 }
