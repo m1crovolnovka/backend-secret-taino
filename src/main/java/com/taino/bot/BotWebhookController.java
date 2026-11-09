@@ -12,12 +12,17 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/bot")
 @Hidden
 public class BotWebhookController {
+
+    private static final Pattern START_CMD = Pattern.compile("^/start(?:@\\w+)?(?:\\s+(.+))?$", Pattern.CASE_INSENSITIVE);
 
     private final TainoProperties properties;
     private final TelegramBotClient botClient;
@@ -52,12 +57,10 @@ public class BotWebhookController {
         }
         long chatId = chatIdNum.longValue();
 
-        if (text.startsWith("/start")) {
-            String payload = text.length() > 6 ? text.substring(6).trim() : "";
-            String roomCode = "";
-            if (payload.startsWith("room_")) {
-                roomCode = payload.substring("room_".length()).trim();
-            }
+        Matcher start = START_CMD.matcher(text.trim());
+        if (start.matches()) {
+            String payload = start.group(1) != null ? start.group(1).trim() : "";
+            String roomCode = extractRoomCode(payload);
 
             String miniApp = properties.getMiniAppUrl();
             String webAppUrl = miniApp;
@@ -66,25 +69,51 @@ public class BotWebhookController {
                 webAppUrl = miniApp + sep + "startapp=room_" + roomCode;
             }
 
-            String body = """
-                    <b>Тайно</b> — анонимный Тайный Санта в Telegram.
-
-                    Как это работает:
-                    1) Заходишь в комнату по ссылке или коду
-                    2) Составляешь список желаний (ссылки и фото)
-                    3) В срок раздачи тебе открывается <i>чужой</i> список — без имени
-                    4) Покупаешь подарок тихо и даришь до даты вручения
-
-                    Админ комнаты приглашает друзей, следит за сроками и запускает раздачу.
-                    """;
+            String body;
+            String button;
             if (StringUtils.hasText(roomCode)) {
-                body += "\nТебя зовут в комнату с кодом <b>" + roomCode + "</b>. Нажми кнопку ниже — откроется Mini App сразу в этой комнате.";
+                body = """
+                        Привет! На связи <b>Тайно</b> 🎁✨
+
+                        Тебя зовут в комнату с кодом <b>%s</b>.
+                        Это анонимный Тайный Санта: составляешь вишлист, а в раздачу открывается чужой список — без имени.
+
+                        Нажимай кнопку — Mini App откроется сразу в этой комнате 👇
+                        """.formatted(roomCode);
+                button = "Войти в комнату 🎁";
             } else {
-                body += "\nНажми кнопку ниже, чтобы открыть приложение.";
+                body = """
+                        Привет! На связи <b>Тайно</b> 🎁✨
+
+                        Анонимный Тайный Санта прямо в Telegram:
+                        1) Заходишь в комнату по ссылке или коду
+                        2) Составляешь список желаний
+                        3) В срок открывается чужой список — без имени
+                        4) Покупаешь подарок тихо и даришь до даты
+
+                        Нажимай кнопку и погнали 👇
+                        """;
+                button = "Открыть Тайно 🎁";
             }
 
-            botClient.sendWelcome(chatId, body.trim(), webAppUrl, StringUtils.hasText(roomCode) ? "Войти в комнату" : "Открыть Тайно");
+            botClient.sendWelcome(chatId, body.trim(), webAppUrl, button);
+            botClient.ensureMenuButton();
         }
         return ResponseEntity.ok().build();
+    }
+
+    static String extractRoomCode(String payload) {
+        if (!StringUtils.hasText(payload)) {
+            return "";
+        }
+        String p = payload.trim();
+        if (p.toLowerCase(Locale.ROOT).startsWith("room_")) {
+            p = p.substring(5);
+        }
+        // Telegram start payloads are [A-Za-z0-9_-]{1,64}
+        if (p.matches("[A-Za-z0-9_-]{4,32}")) {
+            return p.toUpperCase(Locale.ROOT);
+        }
+        return "";
     }
 }

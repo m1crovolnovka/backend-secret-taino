@@ -28,6 +28,7 @@ class AnonymityContractTest {
                 50,
                 100,
                 "BYN",
+                "ny-plum",
                 "тёплое",
                 List.of(new AnonymousAssignmentDtos.AnonymousWishlistItem(
                         WishlistItemType.LINK,
@@ -47,9 +48,9 @@ class AnonymityContractTest {
         assertFalse(raw.contains("userid") || raw.contains("user_id"));
         assertFalse(raw.contains("username"));
         assertFalse(raw.contains("telegram"));
-        assertFalse(raw.contains("color"));
         assertFalse(raw.contains("receiver"));
         assertFalse(raw.contains("giver"));
+        assertTrue(node.path("colorCode").asText().contains("plum"));
         assertTrue(node.path("wishlist").isArray());
         assertTrue(node.path("available").asBoolean());
     }

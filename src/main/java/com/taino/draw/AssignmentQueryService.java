@@ -70,6 +70,7 @@ public class AssignmentQueryService {
                 room.getBudgetMin(),
                 room.getBudgetMax(),
                 room.getCurrency(),
+                receiver.getColorCode(),
                 note,
                 items
         );
@@ -97,6 +98,7 @@ public class AssignmentQueryService {
                 room.getBudgetMin(),
                 room.getBudgetMax(),
                 room.getCurrency(),
+                null,
                 null,
                 List.of()
         );

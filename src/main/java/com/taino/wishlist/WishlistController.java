@@ -50,4 +50,13 @@ public class WishlistController {
     public void delete(@PathVariable Long roomId, @PathVariable Long itemId) {
         wishlistService.deleteMine(SecurityUtils.currentUser().userId(), roomId, itemId);
     }
+
+    @PostMapping("/copy")
+    public WishlistDtos.CopyResponse copy(
+            @PathVariable Long roomId,
+            @Valid @RequestBody WishlistDtos.CopyRequest request
+    ) {
+        return wishlistService.copyFromRoom(
+                SecurityUtils.currentUser().userId(), roomId, request.fromRoomId());
+    }
 }

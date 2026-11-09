@@ -75,6 +75,54 @@ public class WishlistService {
         itemRepository.delete(item);
     }
 
+    /** Copy own wishlist items from another room into the current editable room. */
+    @Transactional
+    public WishlistDtos.CopyResponse copyFromRoom(Long userId, Long toRoomId, Long fromRoomId) {
+        if (fromRoomId == null || fromRoomId.equals(toRoomId)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "Выбери другую комнату");
+        }
+        RoomMemberEntity toMember = requireEditableParticipant(userId, toRoomId);
+        RoomMemberEntity fromMember = access.requireActiveMember(fromRoomId, userId);
+
+        int copied = 0;
+        int skipped = 0;
+        long current = itemRepository.countByMemberId(toMember.getId());
+        for (WishlistItemEntity src : itemRepository.findByMemberIdOrderBySortOrderAscIdAsc(fromMember.getId())) {
+            if (current >= MAX_ITEMS) {
+                skipped++;
+                continue;
+            }
+            WishlistItemEntity item = new WishlistItemEntity();
+            item.setMember(toMember);
+            item.setItemType(src.getItemType());
+            item.setTitle(src.getTitle());
+            item.setBody(src.getBody());
+            item.setUrl(src.getUrl());
+            item.setSku(src.getSku());
+            item.setImage(src.getImage());
+            item.setSortOrder((int) current);
+            itemRepository.save(item);
+            current++;
+            copied++;
+        }
+        return new WishlistDtos.CopyResponse(copied, skipped);
+    }
+
+    /** Used when admin approves an «add item» change request. */
+    @Transactional
+    public WishlistDtos.WishlistItemResponse addForMember(
+            Long actorUserId, RoomMemberEntity member, WishlistDtos.UpsertItemRequest req
+    ) {
+        if (itemRepository.countByMemberId(member.getId()) >= MAX_ITEMS) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "WISHLIST_FULL", "Максимум " + MAX_ITEMS + " пунктов");
+        }
+        WishlistItemEntity item = new WishlistItemEntity();
+        item.setMember(member);
+        apply(item, req, actorUserId);
+        item.setSortOrder(req.sortOrder() != null ? req.sortOrder() : (int) itemRepository.countByMemberId(member.getId()));
+        return toDto(itemRepository.save(item));
+    }
+
     @Transactional(readOnly = true)
     public WishlistDtos.WishlistResponse adminGet(Long userId, Long roomId, Long memberId) {
         return build(requireAdminMember(userId, roomId, memberId), true);

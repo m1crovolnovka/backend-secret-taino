@@ -1,19 +1,26 @@
 package com.taino.changerequest;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 public final class ChangeRequestDtos {
 
     private ChangeRequestDtos() {
     }
 
+    /**
+     * Either a free-form edit request (reason + requestedChanges)
+     * or an add-item request (addTitle, optional url/image).
+     */
     public record CreateRequest(
-            @NotBlank @Size(max = 1000) String reason,
-            @NotBlank @Size(max = 2000) String requestedChanges
+            @Size(max = 1000) String reason,
+            @Size(max = 2000) String requestedChanges,
+            @Size(max = 200) String addTitle,
+            @Size(max = 2000) String addUrl,
+            UUID addImageId
     ) {
     }
 

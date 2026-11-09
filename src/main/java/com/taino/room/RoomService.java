@@ -116,6 +116,14 @@ public class RoomService {
             if (m.getStatus() == MemberStatus.KICKED) {
                 throw new ApiException(HttpStatus.FORBIDDEN, "KICKED", "Вас исключили из комнаты");
             }
+            if (m.getStatus() == MemberStatus.LEFT) {
+                m.setStatus(MemberStatus.ACTIVE);
+                if (m.isParticipates() && !StringUtils.hasText(m.getColorCode())) {
+                    m.setColorCode(pickColor(room));
+                }
+                notificationService.enqueue(userId, room.getId(), "ROOM_JOINED", Instant.now(),
+                        Map.of("title", room.getTitle()));
+            }
             return toDetail(room, m);
         }
 
@@ -124,6 +132,21 @@ public class RoomService {
         notificationService.enqueue(userId, room.getId(), "ROOM_JOINED", Instant.now(),
                 Map.of("title", room.getTitle()));
         return toDetail(room, member);
+    }
+
+    @Transactional
+    public void leave(Long userId, Long roomId) {
+        RoomMemberEntity member = access.requireActiveMember(roomId, userId);
+        RoomEntity room = member.getRoom();
+        if (room.getPhase() != RoomPhase.REGISTRATION || room.isDrawLocked()) {
+            throw new ApiException(HttpStatus.CONFLICT, "LEAVE_CLOSED", "После раздачи комнату покинуть нельзя");
+        }
+        if (member.getRole() == MemberRole.OWNER) {
+            throw new ApiException(HttpStatus.CONFLICT, "OWNER_CANNOT_LEAVE",
+                    "Владелец не может выйти — передай комнату или удали её");
+        }
+        member.setStatus(MemberStatus.LEFT);
+        notificationService.enqueue(userId, roomId, "ROOM_LEFT", Instant.now(), Map.of());
     }
 
     @Transactional(readOnly = true)

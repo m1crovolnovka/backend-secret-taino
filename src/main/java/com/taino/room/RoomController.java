@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -45,5 +46,11 @@ public class RoomController {
     @PutMapping("/{roomId}")
     public RoomDtos.RoomDetail update(@PathVariable Long roomId, @Valid @RequestBody UpdateRoomRequest request) {
         return roomService.update(SecurityUtils.currentUser().userId(), roomId, request);
+    }
+
+    @PostMapping("/{roomId}/leave")
+    public Map<String, Object> leave(@PathVariable Long roomId) {
+        roomService.leave(SecurityUtils.currentUser().userId(), roomId);
+        return Map.of("ok", true);
     }
 }

@@ -38,4 +38,10 @@ public final class WishlistDtos {
             Integer sortOrder
     ) {
     }
+
+    public record CopyRequest(@NotNull Long fromRoomId) {
+    }
+
+    public record CopyResponse(int copied, int skipped) {
+    }
 }

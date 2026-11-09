@@ -21,13 +21,15 @@ public final class AnonymousAssignmentDtos {
             int budgetMin,
             int budgetMax,
             String currency,
+            /** Anonymous band id of the receiver — never a name or Telegram identity. */
+            String colorCode,
             String note,
             List<AnonymousWishlistItem> wishlist
     ) {
     }
 
     /**
-     * No owner userId, username, color, or original filenames.
+     * No owner userId, username, or original filenames.
      */
     public record AnonymousWishlistItem(
             WishlistItemType type,
