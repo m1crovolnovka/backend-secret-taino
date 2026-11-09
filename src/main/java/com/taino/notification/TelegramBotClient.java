@@ -32,7 +32,9 @@ public class TelegramBotClient {
     @EventListener(ApplicationReadyEvent.class)
     public void onReady() {
         ensureBotProfile();
+        ensureBotCommands();
         ensureMenuButton();
+        ensureWebhook();
     }
 
     public boolean sendMessage(long chatId, String text) {
@@ -50,7 +52,48 @@ public class TelegramBotClient {
                     "inline_keyboard", List.of(List.of(button))
             );
         }
-        return send(chatId, text, markup);
+        boolean ok = send(chatId, text, markup);
+        if (!ok && markup != null) {
+            // Retry without keyboard if web_app button was rejected
+            log.warn("Welcome with web_app button failed — retrying as plain text");
+            return send(chatId, text, null);
+        }
+        return ok;
+    }
+
+    public void ensureWebhook() {
+        String token = tokenOrNull();
+        if (token == null) return;
+
+        String base = properties.getPublicApiUrl();
+        if (!StringUtils.hasText(base)) {
+            log.warn("PUBLIC_API_URL is empty — Telegram webhook is NOT registered; /start will do nothing");
+            return;
+        }
+        if (!base.toLowerCase().startsWith("https://")) {
+            log.warn("PUBLIC_API_URL must be HTTPS for Telegram webhook, got: {}", base);
+            return;
+        }
+        String webhookUrl = base.replaceAll("/$", "") + "/api/bot/webhook";
+        try {
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("url", webhookUrl);
+            body.put("allowed_updates", List.of("message"));
+            body.put("drop_pending_updates", false);
+            String secret = properties.getTelegram().getWebhookSecret();
+            if (StringUtils.hasText(secret)) {
+                body.put("secret_token", secret);
+            }
+            Map<?, ?> resp = restClient.post()
+                    .uri("/bot{token}/setWebhook", token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(Map.class);
+            log.info("Telegram setWebhook → {} ({})", webhookUrl, resp);
+        } catch (Exception ex) {
+            log.error("Telegram setWebhook failed: {}", ex.getMessage());
+        }
     }
 
     public void ensureMenuButton() {
@@ -80,6 +123,26 @@ public class TelegramBotClient {
         }
     }
 
+    public void ensureBotCommands() {
+        String token = tokenOrNull();
+        if (token == null) return;
+        try {
+            Map<String, Object> body = Map.of(
+                    "commands", List.of(
+                            Map.of("command", "start", "description", "Открыть Тайно")
+                    )
+            );
+            restClient.post()
+                    .uri("/bot{token}/setMyCommands", token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception ex) {
+            log.warn("Telegram setMyCommands failed: {}", ex.getMessage());
+        }
+    }
+
     public void ensureBotProfile() {
         String token = tokenOrNull();
         if (token == null) return;
@@ -93,7 +156,7 @@ public class TelegramBotClient {
                 3) Тебе выпадает один чужой список без имени.
                 4) Даришь тихо до даты вручения.
 
-                Напишите /start, чтобы открыть приложение и войти в комнату
+                Нажми /start или кнопку «Открыть Тайно», чтобы запустить приложение
                 """.trim();
         try {
             restClient.post()
@@ -131,12 +194,17 @@ public class TelegramBotClient {
             if (replyMarkup != null) {
                 body.put("reply_markup", replyMarkup);
             }
-            restClient.post()
+            Map<?, ?> resp = restClient.post()
                     .uri("/bot{token}/sendMessage", token)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()
-                    .toBodilessEntity();
+                    .body(Map.class);
+            Object ok = resp != null ? resp.get("ok") : null;
+            if (Boolean.FALSE.equals(ok)) {
+                log.warn("Telegram sendMessage rejected: {}", resp);
+                return false;
+            }
             return true;
         } catch (Exception ex) {
             log.warn("Telegram sendMessage failed: {}", ex.getMessage());

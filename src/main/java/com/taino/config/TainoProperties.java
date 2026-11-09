@@ -12,6 +12,8 @@ public class TainoProperties {
     private final Cors cors = new Cors();
     private final Imgbb imgbb = new Imgbb();
     private String miniAppUrl = "http://localhost:5173";
+    /** Public HTTPS base of this API, e.g. https://api.example.com — used to register Telegram webhook. */
+    private String publicApiUrl = "";
 
     public Telegram getTelegram() {
         return telegram;
@@ -35,6 +37,14 @@ public class TainoProperties {
 
     public void setMiniAppUrl(String miniAppUrl) {
         this.miniAppUrl = miniAppUrl;
+    }
+
+    public String getPublicApiUrl() {
+        return publicApiUrl;
+    }
+
+    public void setPublicApiUrl(String publicApiUrl) {
+        this.publicApiUrl = publicApiUrl;
     }
 
     public static class Telegram {
