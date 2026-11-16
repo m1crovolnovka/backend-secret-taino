@@ -39,6 +39,12 @@ public class FormEntity {
     @Column(name = "shoe_size", length = 32)
     private String shoeSize;
 
+    @Column(name = "wb_pickup", length = 500)
+    private String wbPickup;
+
+    @Column(name = "telegram_link", length = 500)
+    private String telegramLink;
+
     @Column(nullable = false)
     private boolean locked;
 
@@ -102,6 +108,22 @@ public class FormEntity {
 
     public void setShoeSize(String shoeSize) {
         this.shoeSize = shoeSize;
+    }
+
+    public String getWbPickup() {
+        return wbPickup;
+    }
+
+    public void setWbPickup(String wbPickup) {
+        this.wbPickup = wbPickup;
+    }
+
+    public String getTelegramLink() {
+        return telegramLink;
+    }
+
+    public void setTelegramLink(String telegramLink) {
+        this.telegramLink = telegramLink;
     }
 
     public boolean isLocked() {

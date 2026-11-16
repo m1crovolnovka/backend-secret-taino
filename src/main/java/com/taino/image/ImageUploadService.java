@@ -37,6 +37,11 @@ public class ImageUploadService {
     @Transactional
     public ImageResponse uploadForRoom(Long userId, Long roomId, MultipartFile file) {
         access.requireActiveMember(roomId, userId);
+        return uploadForUser(userId, file);
+    }
+
+    @Transactional
+    public ImageResponse uploadForUser(Long userId, MultipartFile file) {
         if (imageRepository.countByOwner_Id(userId) >= MAX_IMAGES_PER_USER) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "IMAGE_LIMIT", "Лимит загрузок исчерпан");
         }

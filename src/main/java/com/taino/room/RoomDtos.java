@@ -15,6 +15,8 @@ public final class RoomDtos {
             String theme,
             RoomPhase phase,
             AdminMode adminMode,
+            SecrecyMode secrecyMode,
+            RoomVisibility visibility,
             Instant registrationEndsAt,
             Instant deliveryAt,
             String deliveryPlace,
@@ -29,6 +31,21 @@ public final class RoomDtos {
             long memberCount,
             String inviteLink,
             boolean archived
+    ) {
+    }
+
+    public record PublicRoomCard(
+            Long id,
+            String code,
+            String title,
+            String theme,
+            SecrecyMode secrecyMode,
+            Instant registrationEndsAt,
+            Instant deliveryAt,
+            int budgetMin,
+            int budgetMax,
+            String currency,
+            long memberCount
     ) {
     }
 

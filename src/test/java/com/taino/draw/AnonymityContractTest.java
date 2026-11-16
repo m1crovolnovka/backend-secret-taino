@@ -3,6 +3,7 @@ package com.taino.draw;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taino.room.RoomPhase;
+import com.taino.room.SecrecyMode;
 import com.taino.wishlist.WishlistItemType;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,7 @@ class AnonymityContractTest {
                 true,
                 null,
                 RoomPhase.DRAW_DONE,
+                SecrecyMode.OPEN,
                 Instant.now(),
                 "офис",
                 50,
@@ -30,6 +32,8 @@ class AnonymityContractTest {
                 "BYN",
                 "ny-plum",
                 "тёплое",
+                "ПВЗ WB-12",
+                "https://t.me/someone",
                 List.of(new AnonymousAssignmentDtos.AnonymousWishlistItem(
                         WishlistItemType.LINK,
                         "наушники",
@@ -46,12 +50,14 @@ class AnonymityContractTest {
         String raw = json.toLowerCase();
 
         assertFalse(raw.contains("userid") || raw.contains("user_id"));
-        assertFalse(raw.contains("username"));
-        assertFalse(raw.contains("telegram"));
+        assertFalse(raw.contains("\"username\""));
+        assertFalse(raw.contains("displayname"));
         assertFalse(raw.contains("receiver"));
         assertFalse(raw.contains("giver"));
         assertTrue(node.path("colorCode").asText().contains("plum"));
         assertTrue(node.path("wishlist").isArray());
         assertTrue(node.path("available").asBoolean());
+        assertTrue(node.path("contactLink").asText().contains("t.me"));
+        assertTrue(node.path("wbPickup").asText().contains("WB"));
     }
 }

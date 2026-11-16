@@ -1,10 +1,12 @@
 package com.taino.draw;
 
+import com.taino.form.FormEntity;
 import com.taino.form.FormRepository;
 import com.taino.room.RoomAccessService;
 import com.taino.room.RoomEntity;
 import com.taino.room.RoomMemberEntity;
 import com.taino.room.RoomPhase;
+import com.taino.room.SecrecyMode;
 import com.taino.wishlist.WishlistItemEntity;
 import com.taino.wishlist.WishlistItemRepository;
 import org.springframework.stereotype.Service;
@@ -51,9 +53,8 @@ public class AssignmentQueryService {
         }
 
         RoomMemberEntity receiver = assignment.getReceiver();
-        String note = formRepository.findByMemberId(receiver.getId())
-                .map(f -> f.getNote())
-                .orElse(null);
+        FormEntity form = formRepository.findByMemberId(receiver.getId()).orElse(null);
+        boolean open = room.getSecrecyMode() == SecrecyMode.OPEN;
 
         List<AnonymousAssignmentDtos.AnonymousWishlistItem> items = wishlistItemRepository
                 .findByMemberIdOrderBySortOrderAscIdAsc(receiver.getId())
@@ -65,13 +66,16 @@ public class AssignmentQueryService {
                 true,
                 null,
                 room.getPhase(),
+                room.getSecrecyMode() != null ? room.getSecrecyMode() : SecrecyMode.SECRET,
                 room.getDeliveryAt(),
                 room.getDeliveryPlace(),
                 room.getBudgetMin(),
                 room.getBudgetMax(),
                 room.getCurrency(),
                 receiver.getColorCode(),
-                note,
+                form != null ? form.getNote() : null,
+                open && form != null ? form.getWbPickup() : null,
+                open && form != null ? form.getTelegramLink() : null,
                 items
         );
     }
@@ -93,11 +97,14 @@ public class AssignmentQueryService {
                 false,
                 reason,
                 room.getPhase(),
+                room.getSecrecyMode() != null ? room.getSecrecyMode() : SecrecyMode.SECRET,
                 room.getDeliveryAt(),
                 room.getDeliveryPlace(),
                 room.getBudgetMin(),
                 room.getBudgetMax(),
                 room.getCurrency(),
+                null,
+                null,
                 null,
                 null,
                 List.of()

@@ -101,6 +101,8 @@ public class RoomService {
         room.setTheme(theme);
         room.setPhase(RoomPhase.REGISTRATION);
         room.setAdminMode(req.adminMode());
+        room.setSecrecyMode(req.secrecyMode() != null ? req.secrecyMode() : SecrecyMode.SECRET);
+        room.setVisibility(req.visibility() != null ? req.visibility() : RoomVisibility.PRIVATE);
         room.setOwner(owner);
         room.setRegistrationEndsAt(req.registrationEndsAt());
         room.setDeliveryAt(req.deliveryAt());
@@ -117,13 +119,35 @@ public class RoomService {
         return toDetail(room, ownerMember);
     }
 
+    @Transactional(readOnly = true)
+    public List<RoomDtos.PublicRoomCard> listPublicRooms(String q) {
+        String query = q == null ? "" : q.trim();
+        return roomRepository.findPublicOpen(query).stream()
+                .limit(40)
+                .map(this::toPublicCard)
+                .toList();
+    }
+
     @Transactional
     public RoomDtos.RoomDetail join(Long userId, JoinRoomRequest req) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Пользователь не найден"));
-
         RoomEntity room = roomRepository.findByCodeIgnoreCase(req.code().trim())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "Комната не найдена"));
+        return joinRoom(userId, room);
+    }
+
+    @Transactional
+    public RoomDtos.RoomDetail joinPublic(Long userId, JoinPublicRoomRequest req) {
+        RoomEntity room = roomRepository.findById(req.roomId())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "ROOM_NOT_FOUND", "Комната не найдена"));
+        if (room.getVisibility() != RoomVisibility.PUBLIC) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "NOT_PUBLIC", "Комната не публичная — нужен код");
+        }
+        return joinRoom(userId, room);
+    }
+
+    private RoomDtos.RoomDetail joinRoom(Long userId, RoomEntity room) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Пользователь не найден"));
 
         if (room.getPhase() != RoomPhase.REGISTRATION) {
             throw new ApiException(HttpStatus.CONFLICT, "JOIN_CLOSED", "В эту комнату уже нельзя войти");
@@ -188,6 +212,12 @@ public class RoomService {
         if (req.adminMode() != null) {
             room.setAdminMode(req.adminMode());
             ownerMember.setParticipates(req.adminMode().ownerParticipates());
+        }
+        if (req.secrecyMode() != null) {
+            room.setSecrecyMode(req.secrecyMode());
+        }
+        if (req.visibility() != null) {
+            room.setVisibility(req.visibility());
         }
         if (req.registrationEndsAt() != null) {
             Instant delivery = req.deliveryAt() != null ? req.deliveryAt() : room.getDeliveryAt();
@@ -331,6 +361,23 @@ public class RoomService {
         );
     }
 
+    private RoomDtos.PublicRoomCard toPublicCard(RoomEntity room) {
+        long count = memberRepository.countByRoomIdAndStatus(room.getId(), MemberStatus.ACTIVE);
+        return new RoomDtos.PublicRoomCard(
+                room.getId(),
+                room.getCode(),
+                room.getTitle(),
+                room.getTheme(),
+                room.getSecrecyMode(),
+                room.getRegistrationEndsAt(),
+                room.getDeliveryAt(),
+                room.getBudgetMin(),
+                room.getBudgetMax(),
+                room.getCurrency(),
+                count
+        );
+    }
+
     private RoomDtos.RoomSummary toSummary(RoomEntity room, RoomMemberEntity member) {
         boolean owner = member.getRole() == MemberRole.OWNER;
         long count = memberRepository.countByRoomIdAndStatus(room.getId(), MemberStatus.ACTIVE);
@@ -341,6 +388,8 @@ public class RoomService {
                 room.getTheme(),
                 room.getPhase(),
                 room.getAdminMode(),
+                room.getSecrecyMode() != null ? room.getSecrecyMode() : SecrecyMode.SECRET,
+                room.getVisibility() != null ? room.getVisibility() : RoomVisibility.PRIVATE,
                 room.getRegistrationEndsAt(),
                 room.getDeliveryAt(),
                 room.getDeliveryPlace(),

@@ -13,6 +13,9 @@ public final class FormDtos {
             String note,
             String clothingSize,
             String shoeSize,
+            String wbPickup,
+            String telegramLink,
+            boolean openMode,
             boolean locked,
             boolean canEdit
     ) {
@@ -22,7 +25,9 @@ public final class FormDtos {
             @Size(min = 1, max = 120) String displayName,
             @Size(max = 2000) String note,
             @Size(max = 32) String clothingSize,
-            @Size(max = 32) String shoeSize
+            @Size(max = 32) String shoeSize,
+            @Size(max = 500) String wbPickup,
+            @Size(max = 500) String telegramLink
     ) {
     }
 }

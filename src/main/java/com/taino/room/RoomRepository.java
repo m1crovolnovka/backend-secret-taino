@@ -40,4 +40,13 @@ public interface RoomRepository extends JpaRepository<RoomEntity, Long> {
               and r.deliveryAt <= :cutoff
             """)
     List<RoomEntity> findDueForArchive(@Param("cutoff") Instant cutoff);
+
+    @Query("""
+            select r from RoomEntity r
+            where r.visibility = com.taino.room.RoomVisibility.PUBLIC
+              and r.phase = com.taino.room.RoomPhase.REGISTRATION
+              and (coalesce(:q, '') = '' or lower(r.title) like lower(concat('%', :q, '%')))
+            order by r.createdAt desc
+            """)
+    List<RoomEntity> findPublicOpen(@Param("q") String q);
 }

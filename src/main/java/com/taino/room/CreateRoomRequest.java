@@ -12,6 +12,8 @@ public record CreateRoomRequest(
         @NotBlank @Size(min = 2, max = 120) String title,
         @NotBlank @Size(max = 32) String theme,
         @NotNull AdminMode adminMode,
+        SecrecyMode secrecyMode,
+        RoomVisibility visibility,
         @NotNull Instant registrationEndsAt,
         @NotNull Instant deliveryAt,
         @Size(max = 500) String deliveryPlace,

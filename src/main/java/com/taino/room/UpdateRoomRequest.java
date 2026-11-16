@@ -10,6 +10,8 @@ public record UpdateRoomRequest(
         @Size(min = 2, max = 120) String title,
         @Size(max = 32) String theme,
         AdminMode adminMode,
+        SecrecyMode secrecyMode,
+        RoomVisibility visibility,
         Instant registrationEndsAt,
         Instant deliveryAt,
         @Size(max = 500) String deliveryPlace,

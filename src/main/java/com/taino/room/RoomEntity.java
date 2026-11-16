@@ -42,6 +42,14 @@ public class RoomEntity {
     @Column(name = "admin_mode", nullable = false, length = 32)
     private AdminMode adminMode;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "secrecy_mode", nullable = false, length = 16)
+    private SecrecyMode secrecyMode = SecrecyMode.SECRET;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private RoomVisibility visibility = RoomVisibility.PRIVATE;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
     private UserEntity owner;
@@ -127,6 +135,22 @@ public class RoomEntity {
 
     public void setAdminMode(AdminMode adminMode) {
         this.adminMode = adminMode;
+    }
+
+    public SecrecyMode getSecrecyMode() {
+        return secrecyMode;
+    }
+
+    public void setSecrecyMode(SecrecyMode secrecyMode) {
+        this.secrecyMode = secrecyMode;
+    }
+
+    public RoomVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(RoomVisibility visibility) {
+        this.visibility = visibility;
     }
 
     public UserEntity getOwner() {

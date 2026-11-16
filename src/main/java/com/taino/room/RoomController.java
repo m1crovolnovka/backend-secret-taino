@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,6 +37,11 @@ public class RoomController {
         return roomService.listArchivedRooms(SecurityUtils.currentUser().userId());
     }
 
+    @GetMapping("/public")
+    public List<RoomDtos.PublicRoomCard> publicRooms(@RequestParam(required = false) String q) {
+        return roomService.listPublicRooms(q);
+    }
+
     @PostMapping
     public RoomDtos.RoomDetail create(@Valid @RequestBody CreateRoomRequest request) {
         return roomService.create(SecurityUtils.currentUser().userId(), request);
@@ -44,6 +50,11 @@ public class RoomController {
     @PostMapping("/join")
     public RoomDtos.RoomDetail join(@Valid @RequestBody JoinRoomRequest request) {
         return roomService.join(SecurityUtils.currentUser().userId(), request);
+    }
+
+    @PostMapping("/join-public")
+    public RoomDtos.RoomDetail joinPublic(@Valid @RequestBody JoinPublicRoomRequest request) {
+        return roomService.joinPublic(SecurityUtils.currentUser().userId(), request);
     }
 
     @GetMapping("/{roomId}")

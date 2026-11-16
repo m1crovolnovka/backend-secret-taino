@@ -1,6 +1,7 @@
 package com.taino.draw;
 
 import com.taino.room.RoomPhase;
+import com.taino.room.SecrecyMode;
 import com.taino.wishlist.WishlistItemType;
 
 import java.time.Instant;
@@ -16,6 +17,7 @@ public final class AnonymousAssignmentDtos {
             boolean available,
             String reason,
             RoomPhase phase,
+            SecrecyMode secrecyMode,
             Instant deliveryAt,
             String deliveryPlace,
             int budgetMin,
@@ -24,6 +26,10 @@ public final class AnonymousAssignmentDtos {
             /** Anonymous band id of the receiver — never a name or Telegram identity. */
             String colorCode,
             String note,
+            /** Present only in OPEN mode. */
+            String wbPickup,
+            /** Present only in OPEN mode (contact link), still no username/userId fields. */
+            String contactLink,
             List<AnonymousWishlistItem> wishlist
     ) {
     }

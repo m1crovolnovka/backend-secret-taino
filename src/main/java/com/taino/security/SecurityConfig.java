@@ -44,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/wishlists/shared/**").permitAll()
                         .requestMatchers("/api/docs/**", "/api/swagger/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bot/webhook").permitAll()
                         .anyRequest().authenticated()
