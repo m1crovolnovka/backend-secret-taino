@@ -14,6 +14,8 @@ public class TainoProperties {
     private String miniAppUrl = "http://localhost:5173";
     /** Public HTTPS base of this API, e.g. https://api.example.com — used to register Telegram webhook. */
     private String publicApiUrl = "";
+    /** Optional dedicated key for PII field encryption; falls back to JWT secret. */
+    private String piiSecret = "";
 
     public Telegram getTelegram() {
         return telegram;
@@ -45,6 +47,14 @@ public class TainoProperties {
 
     public void setPublicApiUrl(String publicApiUrl) {
         this.publicApiUrl = publicApiUrl;
+    }
+
+    public String getPiiSecret() {
+        return piiSecret;
+    }
+
+    public void setPiiSecret(String piiSecret) {
+        this.piiSecret = piiSecret;
     }
 
     public static class Telegram {

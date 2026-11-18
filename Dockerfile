@@ -24,4 +24,6 @@ COPY --from=build --chown=taino:taino /app/target/taino-backend.jar /app/app.jar
 
 USER taino
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]
+# Serial GC + capped heap for small/shared VPS; override JAVA_OPTS if needed.
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=55.0 -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m -Xss256k -XX:+ExitOnOutOfMemoryError"
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

@@ -1,5 +1,6 @@
 package com.taino.room;
 
+import com.taino.audit.AuditService;
 import com.taino.common.ApiException;
 import com.taino.common.TextSanitizer;
 import com.taino.config.TainoProperties;
@@ -36,6 +37,7 @@ public class RoomService {
     private final RoomAccessService access;
     private final NotificationService notificationService;
     private final TainoProperties properties;
+    private final AuditService auditService;
 
     public RoomService(
             RoomRepository roomRepository,
@@ -45,7 +47,8 @@ public class RoomService {
             RoomCodeGenerator codeGenerator,
             RoomAccessService access,
             NotificationService notificationService,
-            TainoProperties properties
+            TainoProperties properties,
+            AuditService auditService
     ) {
         this.roomRepository = roomRepository;
         this.memberRepository = memberRepository;
@@ -55,6 +58,7 @@ public class RoomService {
         this.access = access;
         this.notificationService = notificationService;
         this.properties = properties;
+        this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
@@ -80,6 +84,7 @@ public class RoomService {
         String title = room.getTitle();
         Long id = room.getId();
         notificationService.enqueue(userId, id, "ROOM_DELETED", Instant.now(), Map.of("title", title));
+        auditService.record(userId, id, "ROOM_DELETED", Map.of("title", title));
         roomRepository.delete(room);
     }
 
@@ -115,6 +120,10 @@ public class RoomService {
         RoomMemberEntity ownerMember = addMember(room, owner, MemberRole.OWNER, req.adminMode().ownerParticipates());
         ensureForm(ownerMember, owner);
         notificationService.scheduleRoomLifecycle(room);
+        auditService.record(userId, room.getId(), "ROOM_CREATED", Map.of(
+                "visibility", room.getVisibility().name(),
+                "secrecy", room.getSecrecyMode().name()
+        ));
 
         return toDetail(room, ownerMember);
     }
@@ -174,6 +183,7 @@ public class RoomService {
         ensureForm(member, user);
         notificationService.enqueue(userId, room.getId(), "ROOM_JOINED", Instant.now(),
                 Map.of("title", room.getTitle()));
+        auditService.record(userId, room.getId(), "ROOM_JOINED", Map.of());
         return toDetail(room, member);
     }
 
@@ -190,6 +200,7 @@ public class RoomService {
         }
         member.setStatus(MemberStatus.LEFT);
         notificationService.enqueue(userId, roomId, "ROOM_LEFT", Instant.now(), Map.of());
+        auditService.record(userId, roomId, "ROOM_LEFT", Map.of());
     }
 
     @Transactional(readOnly = true)
@@ -239,6 +250,7 @@ public class RoomService {
         if (StringUtils.hasText(req.currency())) {
             room.setCurrency(requireCurrency(req.currency()));
         }
+        auditService.record(userId, roomId, "ROOM_UPDATED", Map.of());
 
         return toDetail(room, ownerMember);
     }

@@ -1,5 +1,6 @@
 package com.taino.auth;
 
+import com.taino.audit.AuditService;
 import com.taino.bot.BotGreetingService;
 import com.taino.config.TainoProperties;
 import com.taino.user.UserEntity;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.Map;
 
 @Service
 public class AuthService {
@@ -22,19 +24,22 @@ public class AuthService {
     private final JwtService jwtService;
     private final TainoProperties properties;
     private final BotGreetingService botGreetingService;
+    private final AuditService auditService;
 
     public AuthService(
             InitDataValidator initDataValidator,
             UserRepository userRepository,
             JwtService jwtService,
             TainoProperties properties,
-            BotGreetingService botGreetingService
+            BotGreetingService botGreetingService,
+            AuditService auditService
     ) {
         this.initDataValidator = initDataValidator;
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.properties = properties;
         this.botGreetingService = botGreetingService;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -73,6 +78,8 @@ public class AuthService {
         }
 
         String token = jwtService.issue(user);
+        auditService.record(user.getId(), null, firstVisit ? "AUTH_REGISTER" : "AUTH_LOGIN",
+                Map.of("deepLink", deepLink));
         return new AuthResponse(
                 token,
                 jwtService.ttlSeconds(),

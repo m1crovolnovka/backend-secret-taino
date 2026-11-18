@@ -1,5 +1,11 @@
 server:
   port: ${SERVER_PORT:8080}
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:40}
+      min-spare: ${TOMCAT_MIN_SPARE:2}
+    accept-count: 50
+    max-connections: 200
   error:
     include-message: never
     include-binding-errors: never
@@ -7,10 +13,18 @@ server:
 spring:
   application:
     name: taino
+  main:
+    lazy-initialization: ${SPRING_LAZY_INIT:true}
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: ${HIKARI_MAX_POOL:4}
+      minimum-idle: ${HIKARI_MIN_IDLE:1}
+      connection-timeout: 10000
+      idle-timeout: 300000
+      max-lifetime: 900000
   jpa:
     open-in-view: false
     hibernate:
@@ -19,6 +33,8 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+        query:
+          in_clause_parameter_padding: true
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -27,6 +43,9 @@ spring:
       max-file-size: 8MB
       max-request-size: 10MB
       enabled: true
+  threads:
+    virtual:
+      enabled: false
 
 management:
   endpoints:
@@ -40,8 +59,10 @@ management:
 
 springdoc:
   api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
     path: /api/docs
   swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}
     path: /api/swagger
 
 taino:
@@ -60,6 +81,8 @@ taino:
   mini-app-url: ${MINI_APP_URL:http://localhost:5173}
   # Public API origin (HTTPS) so the bot can register webhook on startup
   public-api-url: ${PUBLIC_API_URL:}
+  # AES key material for username/name encryption at rest (defaults to JWT_SECRET)
+  pii-secret: ${TAINO_PII_SECRET:}
   imgbb:
     api-key: ${IMGBB_API_KEY:}
     base-url: ${IMGBB_BASE_URL:https://api.imgbb.com}

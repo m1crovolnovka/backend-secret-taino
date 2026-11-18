@@ -1,6 +1,8 @@
 package com.taino.user;
 
+import com.taino.security.EncryptedStringConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,13 +24,17 @@ public class UserEntity {
     @Column(name = "telegram_id", nullable = false, unique = true)
     private Long telegramId;
 
-    @Column(length = 64)
+    /** Telegram @username — AES-GCM encrypted at rest via {@link EncryptedStringConverter}. */
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(length = 512)
     private String username;
 
-    @Column(name = "first_name", nullable = false, length = 128)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "first_name", nullable = false, length = 512)
     private String firstName;
 
-    @Column(name = "last_name", length = 128)
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "last_name", length = 512)
     private String lastName;
 
     @Column(name = "language_code", length = 16)

@@ -1,5 +1,6 @@
 package com.taino.personal;
 
+import com.taino.audit.AuditService;
 import com.taino.common.ApiException;
 import com.taino.common.TextSanitizer;
 import com.taino.config.TainoProperties;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -29,6 +31,7 @@ public class PersonalWishlistService {
     private final UserRepository userRepository;
     private final RoomAccessService access;
     private final TainoProperties properties;
+    private final AuditService auditService;
 
     public PersonalWishlistService(
             PersonalWishlistRepository wishlistRepository,
@@ -37,7 +40,8 @@ public class PersonalWishlistService {
             ImageRepository imageRepository,
             UserRepository userRepository,
             RoomAccessService access,
-            TainoProperties properties
+            TainoProperties properties,
+            AuditService auditService
     ) {
         this.wishlistRepository = wishlistRepository;
         this.itemRepository = itemRepository;
@@ -46,6 +50,7 @@ public class PersonalWishlistService {
         this.userRepository = userRepository;
         this.access = access;
         this.properties = properties;
+        this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
@@ -70,6 +75,7 @@ public class PersonalWishlistService {
         wishlist.setTitle(TextSanitizer.requirePlain(req.title(), 120, "Название"));
         wishlist.setShareToken(newShareToken());
         wishlist = wishlistRepository.save(wishlist);
+        auditService.record(userId, null, "PERSONAL_WISHLIST_CREATED", Map.of("id", wishlist.getId()));
         return toDetail(wishlist);
     }
 
