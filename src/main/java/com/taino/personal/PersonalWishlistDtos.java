@@ -17,7 +17,10 @@ public final class PersonalWishlistDtos {
             Long id,
             String title,
             String shareToken,
-            String shareUrl,
+            /** Telegram Mini App deep-link (preferred for sharing). */
+            String telegramShareUrl,
+            /** Browser preview URL — works without Telegram login. */
+            String webShareUrl,
             int itemCount
     ) {
     }
@@ -26,7 +29,8 @@ public final class PersonalWishlistDtos {
             Long id,
             String title,
             String shareToken,
-            String shareUrl,
+            String telegramShareUrl,
+            String webShareUrl,
             List<ItemResponse> items
     ) {
     }

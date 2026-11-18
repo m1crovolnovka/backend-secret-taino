@@ -60,7 +60,8 @@ public class PersonalWishlistService {
                         w.getId(),
                         w.getTitle(),
                         w.getShareToken(),
-                        shareUrl(w.getShareToken()),
+                        telegramShareUrl(w.getShareToken()),
+                        webShareUrl(w.getShareToken()),
                         (int) itemRepository.countByWishlistId(w.getId())
                 ))
                 .toList();
@@ -215,7 +216,24 @@ public class PersonalWishlistService {
         throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "TOKEN_GEN", "Не удалось создать ссылку");
     }
 
-    private String shareUrl(String token) {
+    /** Opens Mini App with startapp=wish_TOKEN so recipients stay inside Telegram. */
+    private String telegramShareUrl(String token) {
+        String payload = "wish_" + token;
+        String username = properties.getTelegram().getBotUsername();
+        if (username != null && !username.isBlank()) {
+            String bot = username.startsWith("@") ? username.substring(1) : username;
+            String shortName = properties.getTelegram().getMiniAppShortName();
+            if (shortName != null && !shortName.isBlank()) {
+                String name = shortName.startsWith("/") ? shortName.substring(1) : shortName;
+                return "https://t.me/" + bot + "/" + name + "?startapp=" + payload;
+            }
+            return "https://t.me/" + bot + "?startapp=" + payload;
+        }
+        return webShareUrl(token);
+    }
+
+    /** Browser preview — no Telegram login required. */
+    private String webShareUrl(String token) {
         String mini = properties.getMiniAppUrl();
         if (mini == null || mini.isBlank()) {
             return "/shared/" + token;
@@ -230,11 +248,13 @@ public class PersonalWishlistService {
                 .stream()
                 .map(PersonalWishlistService::toItem)
                 .toList();
+        String token = wishlist.getShareToken();
         return new PersonalWishlistDtos.WishlistDetail(
                 wishlist.getId(),
                 wishlist.getTitle(),
-                wishlist.getShareToken(),
-                shareUrl(wishlist.getShareToken()),
+                token,
+                telegramShareUrl(token),
+                webShareUrl(token),
                 items
         );
     }
