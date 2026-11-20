@@ -113,6 +113,23 @@ public class PersonalWishlistService {
     }
 
     @Transactional
+    public PersonalWishlistDtos.ItemResponse updateItem(
+            Long userId,
+            Long wishlistId,
+            Long itemId,
+            PersonalWishlistDtos.UpsertItemRequest req
+    ) {
+        requireOwned(wishlistId, userId);
+        PersonalWishlistItemEntity item = itemRepository.findByIdAndWishlistId(itemId, wishlistId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "ITEM_NOT_FOUND", "Пункт не найден"));
+        apply(item, req, userId);
+        if (req.sortOrder() != null) {
+            item.setSortOrder(req.sortOrder());
+        }
+        return toItem(itemRepository.save(item));
+    }
+
+    @Transactional
     public void deleteItem(Long userId, Long wishlistId, Long itemId) {
         requireOwned(wishlistId, userId);
         PersonalWishlistItemEntity item = itemRepository.findByIdAndWishlistId(itemId, wishlistId)
@@ -147,6 +164,7 @@ public class PersonalWishlistService {
             item.setUrl(src.getUrl());
             item.setSku(src.getSku());
             item.setImage(src.getImage());
+            item.setSourcePersonalItemId(src.getId());
             item.setSortOrder((int) current);
             roomItemRepository.save(item);
             current++;

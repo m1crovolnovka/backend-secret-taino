@@ -36,15 +36,20 @@ public final class AnonymousAssignmentDtos {
 
     /**
      * No owner userId, username, or original filenames.
+     * Claim flags never reveal who claimed — only me / someone else.
      */
     public record AnonymousWishlistItem(
+            Long id,
             WishlistItemType type,
             String title,
             String body,
             String url,
             String sku,
             UUID imageId,
-            String imageUrl
+            String imageUrl,
+            boolean claimable,
+            boolean claimedByMe,
+            boolean claimedByOther
     ) {
     }
 }

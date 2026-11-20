@@ -13,6 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class AssignmentQueryService {
@@ -20,17 +24,20 @@ public class AssignmentQueryService {
     private final AssignmentRepository assignmentRepository;
     private final WishlistItemRepository wishlistItemRepository;
     private final FormRepository formRepository;
+    private final GiftItemClaimRepository claimRepository;
     private final RoomAccessService access;
 
     public AssignmentQueryService(
             AssignmentRepository assignmentRepository,
             WishlistItemRepository wishlistItemRepository,
             FormRepository formRepository,
+            GiftItemClaimRepository claimRepository,
             RoomAccessService access
     ) {
         this.assignmentRepository = assignmentRepository;
         this.wishlistItemRepository = wishlistItemRepository;
         this.formRepository = formRepository;
+        this.claimRepository = claimRepository;
         this.access = access;
     }
 
@@ -56,10 +63,22 @@ public class AssignmentQueryService {
         FormEntity form = formRepository.findByMemberId(receiver.getId()).orElse(null);
         boolean open = room.getSecrecyMode() == SecrecyMode.OPEN;
 
-        List<AnonymousAssignmentDtos.AnonymousWishlistItem> items = wishlistItemRepository
-                .findByMemberIdOrderBySortOrderAscIdAsc(receiver.getId())
-                .stream()
-                .map(this::toAnonymous)
+        List<WishlistItemEntity> rawItems = wishlistItemRepository
+                .findByMemberIdOrderBySortOrderAscIdAsc(receiver.getId());
+
+        List<Long> personalIds = rawItems.stream()
+                .map(WishlistItemEntity::getSourcePersonalItemId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<Long, GiftItemClaimEntity> claimsByPersonal = personalIds.isEmpty()
+                ? Map.of()
+                : claimRepository.findByPersonalItemIdIn(personalIds).stream()
+                        .collect(Collectors.toMap(GiftItemClaimEntity::getPersonalItemId, Function.identity()));
+
+        List<AnonymousAssignmentDtos.AnonymousWishlistItem> items = rawItems.stream()
+                .map(item -> toAnonymous(item, userId, claimsByPersonal))
                 .toList();
 
         return new AnonymousAssignmentDtos.AnonymousAssignmentResponse(
@@ -80,15 +99,37 @@ public class AssignmentQueryService {
         );
     }
 
-    private AnonymousAssignmentDtos.AnonymousWishlistItem toAnonymous(WishlistItemEntity item) {
+    private AnonymousAssignmentDtos.AnonymousWishlistItem toAnonymous(
+            WishlistItemEntity item,
+            Long viewerUserId,
+            Map<Long, GiftItemClaimEntity> claimsByPersonal
+    ) {
+        Long personalId = item.getSourcePersonalItemId();
+        boolean claimable = personalId != null;
+        boolean claimedByMe = false;
+        boolean claimedByOther = false;
+        if (claimable) {
+            GiftItemClaimEntity claim = claimsByPersonal.get(personalId);
+            if (claim != null) {
+                if (claim.getClaimerUserId().equals(viewerUserId)) {
+                    claimedByMe = true;
+                } else {
+                    claimedByOther = true;
+                }
+            }
+        }
         return new AnonymousAssignmentDtos.AnonymousWishlistItem(
+                item.getId(),
                 item.getItemType(),
                 item.getTitle(),
                 item.getBody(),
                 item.getUrl(),
                 item.getSku(),
                 item.getImage() != null ? item.getImage().getId() : null,
-                item.getImage() != null ? item.getImage().getDisplayUrl() : null
+                item.getImage() != null ? item.getImage().getDisplayUrl() : null,
+                claimable,
+                claimedByMe,
+                claimedByOther
         );
     }
 

@@ -53,6 +53,10 @@ public class WishlistItemEntity {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    /** When copied from a personal wishlist — used for cross-room gift claims. */
+    @Column(name = "source_personal_item_id")
+    private Long sourcePersonalItemId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -137,6 +141,14 @@ public class WishlistItemEntity {
 
     public void setSortOrder(int sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public Long getSourcePersonalItemId() {
+        return sourcePersonalItemId;
+    }
+
+    public void setSourcePersonalItemId(Long sourcePersonalItemId) {
+        this.sourcePersonalItemId = sourcePersonalItemId;
     }
 
     public Instant getCreatedAt() {

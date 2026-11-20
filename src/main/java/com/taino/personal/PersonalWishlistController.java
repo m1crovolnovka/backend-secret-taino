@@ -62,6 +62,15 @@ public class PersonalWishlistController {
         return service.addItem(SecurityUtils.currentUser().userId(), wishlistId, request);
     }
 
+    @PutMapping("/{wishlistId}/items/{itemId}")
+    public PersonalWishlistDtos.ItemResponse updateItem(
+            @PathVariable Long wishlistId,
+            @PathVariable Long itemId,
+            @Valid @RequestBody PersonalWishlistDtos.UpsertItemRequest request
+    ) {
+        return service.updateItem(SecurityUtils.currentUser().userId(), wishlistId, itemId, request);
+    }
+
     @DeleteMapping("/{wishlistId}/items/{itemId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteItem(@PathVariable Long wishlistId, @PathVariable Long itemId) {

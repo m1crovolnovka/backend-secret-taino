@@ -35,13 +35,17 @@ class AnonymityContractTest {
                 "ПВЗ WB-12",
                 "https://t.me/someone",
                 List.of(new AnonymousAssignmentDtos.AnonymousWishlistItem(
+                        42L,
                         WishlistItemType.LINK,
                         "наушники",
                         null,
                         "https://example.com",
                         null,
                         UUID.randomUUID(),
-                        "https://i.ibb.co/x/y.jpg"
+                        "https://i.ibb.co/x/y.jpg",
+                        true,
+                        false,
+                        true
                 ))
         );
 
@@ -54,10 +58,13 @@ class AnonymityContractTest {
         assertFalse(raw.contains("displayname"));
         assertFalse(raw.contains("receiver"));
         assertFalse(raw.contains("giver"));
+        assertFalse(raw.contains("claimer"));
         assertTrue(node.path("colorCode").asText().contains("plum"));
         assertTrue(node.path("wishlist").isArray());
         assertTrue(node.path("available").asBoolean());
         assertTrue(node.path("contactLink").asText().contains("t.me"));
         assertTrue(node.path("wbPickup").asText().contains("WB"));
+        assertTrue(node.path("wishlist").get(0).path("claimedByOther").asBoolean());
+        assertTrue(node.path("wishlist").get(0).path("id").asLong() > 0);
     }
 }
