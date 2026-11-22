@@ -83,6 +83,8 @@ public class RoomService {
         RoomEntity room = owner.getRoom();
         String title = room.getTitle();
         Long id = room.getId();
+        // Cancel scheduled reminders first — otherwise ON DELETE SET NULL keeps them PENDING.
+        notificationService.cancelPendingForRoom(id);
         notificationService.enqueue(userId, id, "ROOM_DELETED", Instant.now(), Map.of("title", title));
         auditService.record(userId, id, "ROOM_DELETED", Map.of("title", title));
         roomRepository.delete(room);

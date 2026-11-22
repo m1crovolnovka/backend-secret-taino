@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taino.room.RoomEntity;
 import com.taino.room.RoomMemberEntity;
 import com.taino.room.RoomMemberRepository;
+import com.taino.room.RoomRepository;
 import com.taino.room.MemberStatus;
 import com.taino.user.UserEntity;
 import com.taino.user.UserRepository;
@@ -25,6 +26,7 @@ public class NotificationService {
     private final NotificationRepository repository;
     private final UserRepository userRepository;
     private final RoomMemberRepository memberRepository;
+    private final RoomRepository roomRepository;
     private final TelegramBotClient botClient;
     private final ObjectMapper objectMapper;
 
@@ -32,14 +34,24 @@ public class NotificationService {
             NotificationRepository repository,
             UserRepository userRepository,
             RoomMemberRepository memberRepository,
+            RoomRepository roomRepository,
             TelegramBotClient botClient,
             ObjectMapper objectMapper
     ) {
         this.repository = repository;
         this.userRepository = userRepository;
         this.memberRepository = memberRepository;
+        this.roomRepository = roomRepository;
         this.botClient = botClient;
         this.objectMapper = objectMapper;
+    }
+
+    @Transactional
+    public void cancelPendingForRoom(Long roomId) {
+        if (roomId == null) {
+            return;
+        }
+        repository.cancelPendingByRoomId(roomId);
     }
 
     @Transactional
@@ -111,6 +123,10 @@ public class NotificationService {
         List<NotificationEntity> due = repository.findDue(Instant.now());
         int sent = 0;
         for (NotificationEntity n : due) {
+            if (shouldSkipForMissingRoom(n)) {
+                n.setStatus("CANCELLED");
+                continue;
+            }
             UserEntity user = userRepository.findById(n.getUserId()).orElse(null);
             if (user == null || user.getTelegramId() == null) {
                 n.setStatus("FAILED");
@@ -127,6 +143,22 @@ public class NotificationService {
             }
         }
         return sent;
+    }
+
+    private boolean shouldSkipForMissingRoom(NotificationEntity n) {
+        String type = n.getType() == null ? "" : n.getType();
+        boolean roomBound =
+                type.startsWith("REMINDER_")
+                        || type.startsWith("DRAW_")
+                        || type.equals("ROOM_JOINED")
+                        || type.startsWith("CHANGE_");
+        if (!roomBound) {
+            return false;
+        }
+        if (n.getRoomId() == null) {
+            return true;
+        }
+        return !roomRepository.existsById(n.getRoomId());
     }
 
     private String render(NotificationEntity n) {
