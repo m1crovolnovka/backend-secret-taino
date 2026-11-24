@@ -25,11 +25,17 @@ public class BotGreetingService {
 
     public boolean greet(long telegramUserId, String startParam) {
         String roomCode = extractRoomCode(startParam);
+        String trackPayload = extractTrackingStartParam(startParam);
         String miniApp = properties.getMiniAppUrl();
         String webAppUrl = miniApp;
-        if (StringUtils.hasText(roomCode) && StringUtils.hasText(miniApp)) {
+        if (StringUtils.hasText(miniApp)) {
             String sep = miniApp.contains("?") ? "&" : "?";
-            webAppUrl = miniApp + sep + "startapp=room_" + roomCode;
+            if (StringUtils.hasText(roomCode)) {
+                webAppUrl = miniApp + sep + "startapp=room_" + roomCode;
+            } else if (StringUtils.hasText(trackPayload)) {
+                // Keep attribution payload; do NOT treat trk_* as a room invite.
+                webAppUrl = miniApp + sep + "startapp=" + trackPayload;
+            }
         }
 
         String body;
@@ -66,16 +72,37 @@ public class BotGreetingService {
         return ok;
     }
 
+    /**
+     * Only {@code room_CODE} invites into a room. Tracking payloads like {@code trk_…}
+     * must never be treated as room codes.
+     */
     static String extractRoomCode(String startParam) {
         if (!StringUtils.hasText(startParam)) {
             return "";
         }
         String p = startParam.trim();
-        if (p.toLowerCase(Locale.ROOT).startsWith("room_")) {
-            p = p.substring(5);
+        String lower = p.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("trk_") || lower.startsWith("t_")) {
+            return "";
         }
+        if (!lower.startsWith("room_")) {
+            return "";
+        }
+        p = p.substring(5);
         if (p.matches("[A-Za-z0-9_-]{4,32}")) {
             return p.toUpperCase(Locale.ROOT);
+        }
+        return "";
+    }
+
+    static String extractTrackingStartParam(String startParam) {
+        if (!StringUtils.hasText(startParam)) {
+            return "";
+        }
+        String p = startParam.trim();
+        String lower = p.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("trk_") || lower.startsWith("t_")) {
+            return p;
         }
         return "";
     }

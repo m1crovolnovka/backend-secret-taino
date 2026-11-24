@@ -47,8 +47,8 @@ public class AnalyticsIngestService {
         record(AnalyticsEventType.LINK_CLICK, link, null, null, request, Map.of());
         return new AnalyticsDtos.TrackClickResponse(
                 link.getCode(),
-                buildMiniAppRedirect(link.getCode()),
-                buildTelegramUrl(link.getCode())
+                buildMiniAppRedirect(link.getCode(), link),
+                buildTelegramUrl(link)
         );
     }
 
@@ -181,9 +181,19 @@ public class AnalyticsIngestService {
     }
 
     public String buildTelegramUrl(String code) {
+        return buildTelegramUrl(code, null);
+    }
+
+    public String buildTelegramUrl(TrackingLinkEntity link) {
+        return buildTelegramUrl(link.getCode(), link);
+    }
+
+    public String buildTelegramUrl(String code, TrackingLinkEntity link) {
+        // Telegram startapp payload cannot carry free-form UTM query strings.
+        // Attribution is by trk_CODE; UTM fields live on the tracking_links row.
         String username = properties.getTelegram().getBotUsername();
         if (!StringUtils.hasText(username)) {
-            return buildMiniAppRedirect(code);
+            return buildMiniAppRedirect(code, link);
         }
         String bot = username.startsWith("@") ? username.substring(1) : username;
         String shortName = properties.getTelegram().getMiniAppShortName();
@@ -196,20 +206,62 @@ public class AnalyticsIngestService {
     }
 
     public String buildTrackUrl(String code) {
+        return buildTrackUrl(code, null);
+    }
+
+    public String buildTrackUrl(TrackingLinkEntity link) {
+        return buildTrackUrl(link.getCode(), link);
+    }
+
+    public String buildTrackUrl(String code, TrackingLinkEntity link) {
         String base = properties.getPublicApiUrl();
-        if (!StringUtils.hasText(base)) {
-            return "/api/track/r/" + code;
-        }
-        return base.replaceAll("/$", "") + "/api/track/r/" + code;
+        String path = StringUtils.hasText(base)
+                ? base.replaceAll("/$", "") + "/api/track/r/" + code
+                : "/api/track/r/" + code;
+        return appendUtm(path, link);
     }
 
     public String buildMiniAppRedirect(String code) {
+        return buildMiniAppRedirect(code, null);
+    }
+
+    public String buildMiniAppRedirect(String code, TrackingLinkEntity link) {
         String mini = properties.getMiniAppUrl();
         if (!StringUtils.hasText(mini)) {
-            return buildTelegramUrl(code);
+            return buildTelegramUrl(code, link);
         }
         String sep = mini.contains("?") ? "&" : "?";
-        return mini + sep + "tgWebAppStartParam=trk_" + code;
+        String url = mini + sep + "tgWebAppStartParam=trk_" + code;
+        return appendUtm(url, link);
+    }
+
+    private static String appendUtm(String url, TrackingLinkEntity link) {
+        if (link == null) {
+            return url;
+        }
+        StringBuilder sb = new StringBuilder(url);
+        appendQuery(sb, "utm_source", link.getUtmSource());
+        appendQuery(sb, "utm_medium", link.getUtmMedium());
+        appendQuery(sb, "utm_campaign", link.getUtmCampaign());
+        appendQuery(sb, "utm_content", link.getUtmContent());
+        appendQuery(sb, "utm_term", link.getUtmTerm());
+        return sb.toString();
+    }
+
+    private static void appendQuery(StringBuilder sb, String key, String value) {
+        if (!StringUtils.hasText(value)) {
+            return;
+        }
+        sb.append(sb.indexOf("?") >= 0 ? '&' : '?');
+        sb.append(key).append('=').append(urlEncode(value.trim()));
+    }
+
+    private static String urlEncode(String value) {
+        try {
+            return java.net.URLEncoder.encode(value, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return value;
+        }
     }
 
     private static String normalizeType(String type) {
