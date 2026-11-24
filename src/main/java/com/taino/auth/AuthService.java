@@ -1,5 +1,7 @@
 package com.taino.auth;
 
+import com.taino.analytics.AnalyticsEventType;
+import com.taino.analytics.AnalyticsIngestService;
 import com.taino.audit.AuditService;
 import com.taino.bot.BotGreetingService;
 import com.taino.config.TainoProperties;
@@ -25,6 +27,7 @@ public class AuthService {
     private final TainoProperties properties;
     private final BotGreetingService botGreetingService;
     private final AuditService auditService;
+    private final AnalyticsIngestService analyticsIngestService;
 
     public AuthService(
             InitDataValidator initDataValidator,
@@ -32,7 +35,8 @@ public class AuthService {
             JwtService jwtService,
             TainoProperties properties,
             BotGreetingService botGreetingService,
-            AuditService auditService
+            AuditService auditService,
+            AnalyticsIngestService analyticsIngestService
     ) {
         this.initDataValidator = initDataValidator;
         this.userRepository = userRepository;
@@ -40,6 +44,7 @@ public class AuthService {
         this.properties = properties;
         this.botGreetingService = botGreetingService;
         this.auditService = auditService;
+        this.analyticsIngestService = analyticsIngestService;
     }
 
     @Transactional
@@ -80,6 +85,17 @@ public class AuthService {
         String token = jwtService.issue(user);
         auditService.record(user.getId(), null, firstVisit ? "AUTH_REGISTER" : "AUTH_LOGIN",
                 Map.of("deepLink", deepLink));
+        try {
+            analyticsIngestService.attributeFromStartParam(user.getId(), startParam);
+            analyticsIngestService.emit(
+                    firstVisit ? AnalyticsEventType.USER_REGISTER : AnalyticsEventType.USER_LOGIN,
+                    user.getId(),
+                    startParam,
+                    Map.of("deepLink", deepLink)
+            );
+        } catch (Exception ex) {
+            log.warn("Analytics ingest failed for user {}: {}", user.getId(), ex.getMessage());
+        }
         return new AuthResponse(
                 token,
                 jwtService.ttlSeconds(),

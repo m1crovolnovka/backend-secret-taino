@@ -1,5 +1,7 @@
 package com.taino.room;
 
+import com.taino.analytics.AnalyticsEventType;
+import com.taino.analytics.AnalyticsIngestService;
 import com.taino.audit.AuditService;
 import com.taino.common.ApiException;
 import com.taino.common.TextSanitizer;
@@ -38,6 +40,7 @@ public class RoomService {
     private final NotificationService notificationService;
     private final TainoProperties properties;
     private final AuditService auditService;
+    private final AnalyticsIngestService analyticsIngestService;
 
     public RoomService(
             RoomRepository roomRepository,
@@ -48,7 +51,8 @@ public class RoomService {
             RoomAccessService access,
             NotificationService notificationService,
             TainoProperties properties,
-            AuditService auditService
+            AuditService auditService,
+            AnalyticsIngestService analyticsIngestService
     ) {
         this.roomRepository = roomRepository;
         this.memberRepository = memberRepository;
@@ -59,6 +63,7 @@ public class RoomService {
         this.notificationService = notificationService;
         this.properties = properties;
         this.auditService = auditService;
+        this.analyticsIngestService = analyticsIngestService;
     }
 
     @Transactional(readOnly = true)
@@ -126,6 +131,10 @@ public class RoomService {
                 "visibility", room.getVisibility().name(),
                 "secrecy", room.getSecrecyMode().name()
         ));
+        analyticsIngestService.emitForUser(AnalyticsEventType.ROOM_CREATED, userId, Map.of(
+                "roomId", room.getId(),
+                "code", room.getCode()
+        ));
 
         return toDetail(room, ownerMember);
     }
@@ -177,6 +186,11 @@ public class RoomService {
                 }
                 notificationService.enqueue(userId, room.getId(), "ROOM_JOINED", Instant.now(),
                         Map.of("title", room.getTitle()));
+                analyticsIngestService.emitForUser(AnalyticsEventType.ROOM_JOINED, userId, Map.of(
+                        "roomId", room.getId(),
+                        "code", room.getCode(),
+                        "rejoin", true
+                ));
             }
             return toDetail(room, m);
         }
@@ -186,6 +200,10 @@ public class RoomService {
         notificationService.enqueue(userId, room.getId(), "ROOM_JOINED", Instant.now(),
                 Map.of("title", room.getTitle()));
         auditService.record(userId, room.getId(), "ROOM_JOINED", Map.of());
+        analyticsIngestService.emitForUser(AnalyticsEventType.ROOM_JOINED, userId, Map.of(
+                "roomId", room.getId(),
+                "code", room.getCode()
+        ));
         return toDetail(room, member);
     }
 

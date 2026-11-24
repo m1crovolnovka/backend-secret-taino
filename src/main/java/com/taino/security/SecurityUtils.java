@@ -12,6 +12,22 @@ public final class SecurityUtils {
     }
 
     public static AuthenticatedUser currentUser() {
+        AuthenticatedUser user = principal();
+        if (user.staff()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "STAFF_ONLY_PANEL", "Этот API для Mini App");
+        }
+        return user;
+    }
+
+    public static AuthenticatedUser currentStaff() {
+        AuthenticatedUser user = principal();
+        if (!user.staff()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "STAFF_REQUIRED", "Нужен вход в панель аналитики");
+        }
+        return user;
+    }
+
+    private static AuthenticatedUser principal() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !(auth.getPrincipal() instanceof AuthenticatedUser user)) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Требуется авторизация");

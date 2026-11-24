@@ -35,6 +35,20 @@ public class JwtService {
         return Jwts.builder()
                 .subject(String.valueOf(user.getId()))
                 .claim("tid", user.getTelegramId())
+                .claim("typ", "user")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(exp))
+                .signWith(key)
+                .compact();
+    }
+
+    public String issueStaff(Long staffId, String login) {
+        Instant now = Instant.now();
+        Instant exp = now.plusSeconds(ttlSeconds);
+        return Jwts.builder()
+                .subject(String.valueOf(staffId))
+                .claim("typ", "staff")
+                .claim("login", login)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .signWith(key)
@@ -48,9 +62,18 @@ public class JwtService {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            Long userId = Long.valueOf(claims.getSubject());
-            Long telegramId = claims.get("tid", Number.class).longValue();
-            return new AuthenticatedUser(userId, telegramId);
+            Long id = Long.valueOf(claims.getSubject());
+            String typ = claims.get("typ", String.class);
+            if ("staff".equalsIgnoreCase(typ)) {
+                return AuthenticatedUser.staff(id);
+            }
+            Number tid = claims.get("tid", Number.class);
+            if (tid == null) {
+                throw new ApiException(HttpStatus.UNAUTHORIZED, "TOKEN_INVALID", "Сессия недействительна");
+            }
+            return AuthenticatedUser.telegram(id, tid.longValue());
+        } catch (ApiException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "TOKEN_INVALID", "Сессия недействительна");
         }

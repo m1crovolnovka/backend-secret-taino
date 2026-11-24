@@ -22,4 +22,6 @@ public interface RoomMemberRepository extends JpaRepository<RoomMemberEntity, Lo
     Set<String> findUsedColors(@Param("roomId") Long roomId);
 
     long countByRoomIdAndStatusAndParticipatesTrue(Long roomId, MemberStatus status);
+
+    long countByStatusAndParticipatesTrue(MemberStatus status);
 }

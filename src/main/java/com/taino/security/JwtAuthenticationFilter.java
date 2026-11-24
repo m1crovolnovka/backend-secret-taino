@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -36,7 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (!token.isEmpty()) {
                 try {
                     AuthenticatedUser user = jwtService.parse(token);
-                    var auth = new UsernamePasswordAuthenticationToken(user, null, List.of());
+                    var authorities = user.staff()
+                            ? List.of(new SimpleGrantedAuthority("ROLE_STAFF"))
+                            : List.of(new SimpleGrantedAuthority("ROLE_USER"));
+                    var auth = new UsernamePasswordAuthenticationToken(user, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 } catch (Exception ex) {
                     // Stale/invalid JWT must not block /api/auth/telegram re-login on mobile WebViews

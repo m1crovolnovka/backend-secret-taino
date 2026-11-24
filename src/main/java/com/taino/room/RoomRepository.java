@@ -49,4 +49,6 @@ public interface RoomRepository extends JpaRepository<RoomEntity, Long> {
             order by r.createdAt desc
             """)
     List<RoomEntity> findPublicOpen(@Param("q") String q);
+
+    long countByPhaseNot(RoomPhase phase);
 }

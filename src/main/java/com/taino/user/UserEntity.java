@@ -44,6 +44,10 @@ public class UserEntity {
     @Column(name = "bot_greeted_at")
     private Instant botGreetedAt;
 
+    /** First tracking link that brought this user (utm / campaign attribution). */
+    @Column(name = "attribution_link_id")
+    private Long attributionLinkId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -112,6 +116,14 @@ public class UserEntity {
 
     public void setBotGreetedAt(Instant botGreetedAt) {
         this.botGreetedAt = botGreetedAt;
+    }
+
+    public Long getAttributionLinkId() {
+        return attributionLinkId;
+    }
+
+    public void setAttributionLinkId(Long attributionLinkId) {
+        this.attributionLinkId = attributionLinkId;
     }
 
     public Instant getCreatedAt() {
