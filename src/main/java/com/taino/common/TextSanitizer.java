@@ -28,6 +28,19 @@ public final class TextSanitizer {
         return cleaned.isEmpty() ? null : cleaned;
     }
 
+    /** Like {@link #plain}, but keeps intentional inner/trailing spaces (notes, free text). */
+    public static String plainKeepSpaces(String input, int maxLen) {
+        if (input == null) {
+            return null;
+        }
+        String cleaned = TAGS.matcher(input).replaceAll("");
+        cleaned = CONTROL.matcher(cleaned).replaceAll("");
+        if (cleaned.length() > maxLen) {
+            cleaned = cleaned.substring(0, maxLen);
+        }
+        return cleaned.isBlank() ? null : cleaned;
+    }
+
     public static String requirePlain(String input, int maxLen, String field) {
         String cleaned = plain(input, maxLen);
         if (!StringUtils.hasText(cleaned)) {

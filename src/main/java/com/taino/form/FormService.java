@@ -86,7 +86,7 @@ public class FormService {
             form.setDisplayName(TextSanitizer.requirePlain(req.displayName(), 120, "Имя"));
         }
         if (req.note() != null) {
-            form.setNote(TextSanitizer.plain(req.note(), 2000));
+            form.setNote(TextSanitizer.plainKeepSpaces(req.note(), 2000));
         }
         if (req.clothingSize() != null) {
             form.setClothingSize(TextSanitizer.plain(req.clothingSize(), 32));

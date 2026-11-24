@@ -151,7 +151,16 @@ public class PersonalWishlistService {
         int copied = 0;
         int skipped = 0;
         long current = roomItemRepository.countByMemberId(member.getId());
+        java.util.Set<Long> already = roomItemRepository.findByMemberIdOrderBySortOrderAscIdAsc(member.getId())
+                .stream()
+                .map(WishlistItemEntity::getSourcePersonalItemId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
         for (PersonalWishlistItemEntity src : itemRepository.findByWishlistIdOrderBySortOrderAscIdAsc(wishlist.getId())) {
+            if (already.contains(src.getId())) {
+                skipped++;
+                continue;
+            }
             if (current >= WishlistService.MAX_ITEMS) {
                 skipped++;
                 continue;
@@ -167,6 +176,7 @@ public class PersonalWishlistService {
             item.setSourcePersonalItemId(src.getId());
             item.setSortOrder((int) current);
             roomItemRepository.save(item);
+            already.add(src.getId());
             current++;
             copied++;
         }
