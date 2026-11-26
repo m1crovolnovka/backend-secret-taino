@@ -17,6 +17,10 @@ public final class ColorPalette {
             "birthday", List.of(
                     "bd-sugar", "bd-lemon", "bd-sky", "bd-mint", "bd-lilac",
                     "bd-coral", "bd-ink", "bd-peach", "bd-lime", "bd-fuchsia"
+            ),
+            "casual", List.of(
+                    "cs-mint", "cs-fog", "cs-sand", "cs-lilac", "cs-sky",
+                    "cs-peach", "cs-leaf", "cs-ink", "cs-cream", "cs-berry"
             )
     );
 
